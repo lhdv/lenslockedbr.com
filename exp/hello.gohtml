@@ -1,2 +1,13 @@
 <h1>Hello, {{.Name}}!</h1>
 <h2>How's the weather at {{.City}}?</h2>
+<p>On {{.Today.Format "02/01/2006" }} you have {{.Age}} years old, and you weight {{.Weight}} KGs.</p>
+{{if .Children}}
+<p>Your children's name and age:</p>
+<ol>
+	{{range $k, $e := .Children}}
+	<li>{{$k}}, {{$e}} years old.</li>
+	{{end}}
+</ol>
+{{else}}
+<p>You have no kids.</p>
+{{end}}
