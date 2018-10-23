@@ -13,7 +13,8 @@ func main() {
 
 	data := struct {
 		Name string
-	} {"John Smith"}
+		City string
+	} {"John Smith", "Bay Area"}
 
 	err = t.Execute(os.Stdout, data)
 	if err != nil {
