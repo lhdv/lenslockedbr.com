@@ -31,7 +31,7 @@ func must(err error) {
 }
 
 func main() {
-	faqView = views.NewView("bootstrap_bggray", "views/faq.gohtml")
+//	faqView = views.NewView("bootstrap_bggray", "views/faq.gohtml")
 
 	usersC := controllers.NewUsers()
 	staticC := controllers.NewStatic()
