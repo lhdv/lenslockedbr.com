@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"lenslockedbr.com/views"
@@ -28,3 +29,18 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 } 
+
+//
+// Create is used to process the signup form when a user
+// tries to create a new user account.
+//
+// POST / signup
+//
+func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm() ; err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, r.PostForm["email"])
+	fmt.Fprintln(w, r.PostForm["password"])
+}
+
