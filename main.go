@@ -5,17 +5,9 @@ import (
 	"net/http"
 
 	"lenslockedbr.com/controllers"
-	"lenslockedbr.com/views"
 
 	"github.com/gorilla/mux"
 )
-
-var faqView *views.View
-
-func faq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(faqView.Render(w, nil))
-}
 
 func notfound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","text/html")
@@ -31,10 +23,9 @@ func must(err error) {
 }
 
 func main() {
-//	faqView = views.NewView("bootstrap_bggray", "views/faq.gohtml")
-
-	usersC := controllers.NewUsers()
 	staticC := controllers.NewStatic()
+	usersC := controllers.NewUsers()
+	galleryC := controllers.NewGalleries()
 
 	r := mux.NewRouter()
 
@@ -42,9 +33,13 @@ func main() {
 
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
-	r.HandleFunc("/faq", faq)
+	r.Handle("/faq", staticC.Faq).Methods("GET")
+
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+
+	r.HandleFunc("/galleries/new", galleryC.New).Methods("GET")
+
 	http.ListenAndServe(":3000", r)
 }
 
