@@ -5,7 +5,14 @@ import (
 	"net/http"
 
 	"lenslockedbr.com/views"
+
+	"github.com/gorilla/schema"
 )
+
+type SignupForm struct {
+	Email    string `schema:"email"`
+	Password string `schema:"password"`
+}
 
 type Users struct {
 	NewView *views.View
@@ -40,7 +47,12 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm() ; err != nil {
 		panic(err)
 	}
-	fmt.Fprintln(w, r.PostForm["email"])
-	fmt.Fprintln(w, r.PostForm["password"])
+
+	dec := schema.NewDecoder()
+	form := SignupForm{}
+	if err := dec.Decode(&form, r.PostForm); err != nil {
+		panic(err)
+	}
+	fmt.Fprintln(w, form)
 }
 
