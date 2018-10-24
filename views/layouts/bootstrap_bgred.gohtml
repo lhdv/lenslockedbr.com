@@ -1,0 +1,25 @@
+{{define "bootstrap_bggray"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>LensLockedBR.com</title>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body { background: gray !important; } /* Adding !important forces the browser to overwrite the default style applied by Bootstrap */
+    </style>
+  </head>
+
+  <body>
+    {{template "navbar"}}
+
+    <div class="container-fluid">
+      {{template "yield" .}}
+      {{template "footer"}}
+    </div>
+
+    <!-- jQuery & Bootstrap JS -->
+    <script src ="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script> 
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </body>
+</html>
+{{end}}
