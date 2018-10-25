@@ -34,5 +34,6 @@ func main() {
 
 	fmt.Println("Successfully connected!")
 
+	db.LogMode(true)
 	db.AutoMigrate(&User{})
 }
