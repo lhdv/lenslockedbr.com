@@ -1,52 +1,34 @@
 package main
 
 import (
-	"html/template"
-	"os"
-	"time"
+	"database/sql"
+	"fmt"
+
+	_ "github.com/lib/pq"
+)
+
+const (
+	host     = "192.168.56.101"
+	port     = 5432
+	user     = "developer"
+	password = "1234qwer"
+	dbname   = "lenslockedbr_dev"
 )
 
 func main() {
-	t, err := template.ParseFiles("hello.gohtml")
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	data := struct {
-		Name     string
-		City     string
-		Today    time.Time
-                Age      int
-                Weight   float64
-		Children map[string]int
-	} {"John Smith", 
-           "Bay Area", 
-           time.Now(),
-           33,
-           88.25,
-           map[string]int{"Jhonny":5, "Anne":10}}
-
-	err = t.Execute(os.Stdout, data)
+	err = db.Ping()
 	if err != nil {
 		panic(err)
 	}
 
-	data1 := struct {
-		Name     string
-		City     string
-		Today    time.Time
-                Age      int
-                Weight   float64
-		Children map[string]int
-	} {"Mary Anne", 
-           "Texas", 
-           time.Now(),
-           23,
-           58.25,
-	   nil}
-
-	err = t.Execute(os.Stdout, data1)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println("Successfully connected!")
+	db.Close()
 }
