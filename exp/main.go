@@ -48,6 +48,14 @@ func main() {
 	}
 
 	fmt.Printf("+v\n", u)
+
+	u = &User{}
+	maxID := 3
+	db.Where("id <= ?", maxID).First(&u)
+	if db.Error != nil {
+		panic(db.Error)
+	}
+	fmt.Println(u)
 }
 
 func getInfo() (name, email string) {
