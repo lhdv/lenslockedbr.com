@@ -40,22 +40,30 @@ func main() {
 	db.LogMode(true)
 	db.AutoMigrate(&User{})
 
-	name, email := getInfo()
-	u := &User{Name: name, Email: email}
-	err = db.Create(u).Error
-	if err != nil {
-		panic(err)
-	}
+	// name, email := getInfo()
+	// u := &User{Name: name, Email: email}
+	// err = db.Create(u).Error
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	fmt.Printf("+v\n", u)
+	// fmt.Printf("+v\n", u)
 
-	u = &User{}
+	var u = &User{}
 	maxID := 3
 	db.Where("id <= ?", maxID).First(&u)
 	if db.Error != nil {
 		panic(db.Error)
 	}
 	fmt.Println(u)
+
+	var users []User
+	db.Find(&users)
+	if db.Error != nil {
+		panic(db.Error)
+	}
+	fmt.Println("Retrieved", len(users), " users")
+	fmt.Println(users)
 }
 
 func getInfo() (name, email string) {
