@@ -9,12 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func notfound(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","text/html")
-	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprint(w, "<h2>WHOW! Page Not Found - 404!</h2>")
-}
-
 func main() {
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers()
@@ -22,7 +16,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.NotFoundHandler = http.HandlerFunc(notfound)
+	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")

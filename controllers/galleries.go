@@ -11,7 +11,8 @@ type Galleries struct {
 
 func NewGalleries() *Galleries {
 	return &Galleries {
-		NewView: views.NewView("bootstrap", "galleries/new"),
+		NewView: views.NewView("bootstrap", false, 
+                                       "galleries/new"),
 	}
 }
 

@@ -18,7 +18,8 @@ type Users struct {
 
 func NewUsers() *Users {
 	return &Users{
-		NewView: views.NewView("bootstrap", "users/new"),
+		NewView: views.NewView("bootstrap", false, 
+                                       "users/new"),
 	}
 }
 

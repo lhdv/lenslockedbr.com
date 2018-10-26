@@ -15,9 +15,10 @@ var (
 type View struct {
 	Template *template.Template
 	Layout   string
+	NotFound bool
 }
 
-func NewView(layout string, files ...string) *View {
+func NewView(layout string, notfound bool, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
@@ -29,11 +30,17 @@ func NewView(layout string, files ...string) *View {
 	return &View{ 
 		Template: t, 
                 Layout: layout,
+		NotFound: notfound,
 	}
 }
 
 func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "text/html")
+
+	if v.NotFound {
+		w.WriteHeader(http.StatusNotFound)
+	}
+
 	return v.Template.ExecuteTemplate(w, v.Layout, data)
 }
 
