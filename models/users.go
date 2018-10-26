@@ -67,3 +67,8 @@ func (u *UserService)DestructiveReset() {
 	us.db.AutoMigrate(&User{})
 }
 
+// Create will create the provided user and backfill data like
+// the ID, CreatedAt, and UpdatedAt fields.
+func (u *UserService)Create(user *User) error {
+	return us.db.Create(user).Error	
+}
