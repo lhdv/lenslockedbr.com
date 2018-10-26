@@ -15,13 +15,6 @@ func notfound(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h2>WHOW! Page Not Found - 404!</h2>")
 }
 
-// A helper function that panics on any error
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func main() {
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers()
