@@ -10,16 +10,20 @@ import (
 var (
 	// ErrNotFound is returned when a resource cannot be found
 	// in database.
-	ErrNotFound = erros.New("models: resource nor found")
+	ErrNotFound = errors.New("models: resource not found")
+
+	// ErrInvalidID is returned when an invalid ID is
+	// provided to a method like Delete.
+	ErrInvalidID = errors.New("models: ID provided was invalid")
 )
 
-type User {
+type User struct {
 	gorm.Model
 	Name string
 	Email string `gorm:"not null.unique_index"`
 }
 
-type UserService {
+type UserService struct {
 	db *gorm.DB
 }
 
@@ -38,6 +42,18 @@ func (u *UserService) Close() error {
 	return u.db.Close()
 }
 
+// DestructiveReset drops the user table and rebuilds it
+func (u *UserService)DestructiveReset() {
+	u.db.DropTableIfExists(&User{})
+	u.db.AutoMigrate(&User{})
+}
+
+// Create will create the provided user and backfill data like
+// the ID, CreatedAt, and UpdatedAt fields.
+func (u *UserService) Create(user *User) error {
+	return u.db.Create(user).Error	
+}
+
 // ByID will look up a user with the provided ID.
 // If the user is found, we will return a nil error
 // If the user is not found, we will return ErrNotFound
@@ -47,7 +63,7 @@ func (u *UserService) Close() error {
 //
 // As a general rule, any error but ErrNotFound should probably 
 // result in a 500 error.
-func (u *UserService) ByID(id uint) (*UserService, error) {
+func (u *UserService) ByID(id uint) (*User, error) {
 	var user User
 
 	db := u.db.Where("id = ?", id)
@@ -66,7 +82,7 @@ func (u *UserService) ByID(id uint) (*UserService, error) {
 // If there is another error, we will return an error with more 
 // information about what went wrong. This may not be an error generated
 // by the models package.
-func (u *UserService) ByEmail(email string) error {
+func (u *UserService) ByEmail(email string) (*User, error) {
 	var user User
 	db := u.db.Where("email = ?", email)
 	err := first(db, &user)
@@ -78,16 +94,20 @@ func (u *UserService) ByEmail(email string) error {
 
 }
 
-// DestructiveReset drops the user table and rebuilds it
-func (u *UserService)DestructiveReset() {
-	us.db.DropTableIfExists(&User{})
-	us.db.AutoMigrate(&User{})
+// Update will update the provided user with all of the data in
+// the provided user object.
+func (u *UserService) Update(user *User) error {
+	return u.db.Save(user).Error
 }
 
-// Create will create the provided user and backfill data like
-// the ID, CreatedAt, and UpdatedAt fields.
-func (u *UserService) Create(user *User) error {
-	return us.db.Create(user).Error	
+// Delete will delete the user with the provided ID
+func (u *UserService) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+
+	user := User{Model: gorm.Model{ID: id}}
+	return u.db.Delete(&user).Error
 }
 
 //
@@ -101,7 +121,7 @@ func (u *UserService) Create(user *User) error {
 //
 func first(db *gorm.DB, dst interface{}) error {
 	err := db.First(dst).Error
-	if err = gorm.ErrRecordNotFound {
+	if err == gorm.ErrRecordNotFound {
 		return ErrNotFound
 	}
 	return err

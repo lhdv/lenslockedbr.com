@@ -1,13 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"lenslockedbr.com/models"
 )
 
 const (
@@ -18,98 +14,75 @@ const (
 	dbname   = "lenslockedbr_dev"
 )
 
-type User struct {
-	gorm.Model
-	Name   string
-	Email  string `gorm:"not null;unique_index"`
-	Orders []Order
-}
-
-type Order struct {
-	gorm.Model
-	UserID      uint
-	Amount      int
-	Description string
-}
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s " +  
+                                "dbname=%s sslmode=disable",
+		                 host, port, user, password, dbname)
 
-	db, err := gorm.Open("postgres", psqlInfo)
+	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 
-	defer db.Close()
+	defer us.Close()
+
+	us.DestructiveReset()
 
 	fmt.Println("Successfully connected!")
 
-	db.LogMode(true)
-	db.AutoMigrate(&User{}, &Order{})
+	var user models.User
 
-	// name, email := getInfo()
-	// u := &User{Name: name, Email: email}
-	// err = db.Create(u).Error
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// fmt.Printf("+v\n", u)
-
-	var u = &User{}
-	maxID := 3
-	db.Where("id <= ?", maxID).First(&u)
-	if db.Error != nil {
-		panic(db.Error)
+	user = models.User{ Name: "Foobar", 
+                     Email: "foobar@example.com",
 	}
-	fmt.Println(u)
-
-	var users []User
-	db.Find(&users)
-	if db.Error != nil {
-		panic(db.Error)
-	}
-	fmt.Println("Retrieved", len(users), " users")
-	fmt.Println(users)
-
-	// Add orders from users
-	// for _, u := range users {
-	// 	createOrder(db, u, int((u.ID*1000)+1), "Random description 01")
-	// 	createOrder(db, u, int((u.ID*1000)+9), "Random description 09")
-	// 	createOrder(db, u, int((u.ID*1000)+88), "Random description 88")
-	// }
-
-	u = &User{}
-	db.Preload("Orders").First(&u)
-	if db.Error != nil {
-		panic(db.Error)
+	err = us.Create(&user)
+	if err != nil {
+		panic(err)
 	}
 
-	fmt.Println("Email:", u.Email)
-	fmt.Println("Number of orders:", len(u.Orders))
-	fmt.Println("Orders:", u.Orders)
-}
+	fmt.Println("User created:", user)
 
-func getInfo() (name, email string) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(" What is your name?")
-	name, _ = reader.ReadString('\n')
-	name = strings.TrimSpace(name)
-	fmt.Println(" What is your email?")
-	email, _ = reader.ReadString('\n')
-	email = strings.TrimSpace(email)
-
-	return name, email
-}
-
-func createOrder(db *gorm.DB, user User, amount int, desc string) {
-	db.Create(&Order{
-		UserID:      user.ID,
-		Amount:      amount,
-		Description: desc,
-	})
-	if db.Error != nil {
-		panic(db.Error)
+	user = models.User{ Name: "Test", 
+                     Email: "test@example.com",
 	}
+	err = us.Create(&user)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("User created:", user)
+
+	byId, err := us.ByID(2)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("User find by ID:", byId)
+
+	byEmail, err := us.ByEmail("foobar@example.com")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("User find by Email:", byEmail)
+
+	byId.Name = "Updated"
+	err = us.Update(byId)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("User updated:", byId)
+
+	err = us.Delete(2)
+	if err != nil {
+		panic(err)
+	}
+
+	fetchById, err := us.ByID(2)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("User find deleted by ID:", fetchById)
 }
