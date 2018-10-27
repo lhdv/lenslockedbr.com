@@ -8,6 +8,7 @@ import (
 )
 
 type SignupForm struct {
+	Name     string `schema:"name"`
 	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
@@ -48,6 +49,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	fmt.Fprintln(w, "Name is", form.Name)
 	fmt.Fprintln(w, "Email is", form.Email)
 	fmt.Fprintln(w, "Passoword is", form.Password)
 }
