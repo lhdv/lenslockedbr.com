@@ -43,9 +43,19 @@ func (u *UserService) Close() error {
 }
 
 // DestructiveReset drops the user table and rebuilds it
-func (u *UserService)DestructiveReset() {
-	u.db.DropTableIfExists(&User{})
-	u.db.AutoMigrate(&User{})
+func (u *UserService)DestructiveReset() error {
+	err := u.db.DropTableIfExists(&User{}).Error
+	if err != nil {
+		return err
+	}
+	return u.AutoMigrate()
+}
+
+// AutoMigrate will attempt to automatically migrate the users table
+func (u *UserService) AutoMigrate() error {
+	if err := u.db.AutoMigrate(&User{}).Error; err != nil {
+		return err
+	}
 }
 
 // Create will create the provided user and backfill data like
