@@ -20,6 +20,7 @@ var (
 type User struct {
 	gorm.Model
 	Name string
+	Age int
 	Email string `gorm:"not null.unique_index"`
 }
 
@@ -56,6 +57,7 @@ func (u *UserService) AutoMigrate() error {
 	if err := u.db.AutoMigrate(&User{}).Error; err != nil {
 		return err
 	}
+	return nil
 }
 
 // Create will create the provided user and backfill data like

@@ -4,23 +4,27 @@ import (
 	"fmt"
 	"net/http"
 
+	"lenslockedbr.com/models"
 	"lenslockedbr.com/views"
 )
 
 type SignupForm struct {
 	Name     string `schema:"name"`
+	Age      int    `schema:"age"`
 	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
 
 type Users struct {
 	NewView *views.View
+	service *models.UserService
 }
 
-func NewUsers() *Users {
+func NewUsers(us *models.UserService) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", false, 
                                        "users/new"),
+		service: us,
 	}
 }
 
@@ -49,8 +53,17 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	fmt.Fprintln(w, "Name is", form.Name)
-	fmt.Fprintln(w, "Email is", form.Email)
-	fmt.Fprintln(w, "Passoword is", form.Password)
+	user := models.User{
+		Name: form.Name,
+		Age: form.Age,
+		Email: form.Email,
+	}
+
+	if err := u.service.Create(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintln(w, "User is", user)
 }
 
