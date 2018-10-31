@@ -22,14 +22,14 @@ type Users struct {
 
 func NewUsers(us *models.UserService) *Users {
 	return &Users{
-		NewView: views.NewView("bootstrap", false, 
-                                       "users/new"),
+		NewView: views.NewView("bootstrap", false,
+			"users/new"),
 		service: us,
 	}
 }
 
 //
-// New is used to render the form where a user can create a new 
+// New is used to render the form where a user can create a new
 // user account.
 //
 // GET /signup
@@ -38,7 +38,7 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 	if err := u.NewView.Render(w, nil); err != nil {
 		panic(err)
 	}
-} 
+}
 
 //
 // Create is used to process the signup form when a user
@@ -54,9 +54,10 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{
-		Name: form.Name,
-		Age: form.Age,
-		Email: form.Email,
+		Name:     form.Name,
+		Age:      form.Age,
+		Email:    form.Email,
+		Password: form.Password,
 	}
 
 	if err := u.service.Create(&user); err != nil {
@@ -66,4 +67,3 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "User is", user)
 }
-
