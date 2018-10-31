@@ -34,7 +34,8 @@ func main() {
 	var user models.User
 
 	user = models.User{ Name: "Foobar", 
-                     Email: "foobar@example.com",
+			    Age: 10,
+                            Email: "foobar@example.com",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -44,7 +45,8 @@ func main() {
 	fmt.Println("User created:", user)
 
 	user = models.User{ Name: "Test", 
-                     Email: "test@example.com",
+			Age: 15,
+			Email: "test@example.com",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -74,6 +76,13 @@ func main() {
 	}
 
 	fmt.Println("User updated:", byId)
+
+	agesInRange, err := us.InAgeRange(1,20)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Users on age range of 1,20:", agesInRange)
 
 	err = us.Delete(2)
 	if err != nil {
