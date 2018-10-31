@@ -5,6 +5,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -65,6 +66,15 @@ func (u *UserService) AutoMigrate() error {
 // Create will create the provided user and backfill data like
 // the ID, CreatedAt, and UpdatedAt fields.
 func (u *UserService) Create(user *User) error {
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password),
+		bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
+
 	return u.db.Create(user).Error
 }
 
