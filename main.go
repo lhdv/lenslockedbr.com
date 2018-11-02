@@ -47,6 +47,8 @@ func main() {
 
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
+	r.Handle("/login", usersC.LoginView).Methods("GET")
+	r.HandleFunc("/login", usersC.Login).Methods("POST")
 
 	r.HandleFunc("/galleries/new", galleryC.New).Methods("GET")
 

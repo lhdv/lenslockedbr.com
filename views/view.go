@@ -50,6 +50,12 @@ func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/////////////////////////////////////////////////////////////////////
+//
+// HELPER FUNCTIONS
+//
+/////////////////////////////////////////////////////////////////////
+
 func layoutFiles() []string {
 	files, err := filepath.Glob(LayoutDir + "*" + TemplateExt)
 	if err != nil {

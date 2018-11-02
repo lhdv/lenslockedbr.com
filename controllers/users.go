@@ -15,15 +15,24 @@ type SignupForm struct {
 	Password string `schema:"password"`
 }
 
+type LoginForm struct {
+	Email string `schema:"email"`
+	Password string `schema:"password"`
+}
+
 type Users struct {
 	NewView *views.View
+	LoginView *views.View
 	service *models.UserService
 }
 
 func NewUsers(us *models.UserService) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", false,
-			"users/new"),
+			               "users/new"),
+
+		LoginView: views.NewView("bootstrap", false,
+			                 "users/login"),
 		service: us,
 	}
 }
@@ -66,4 +75,17 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "User is", user)
+}
+
+// Login is used to process the login form when a user tries to log
+// in as an existing user(via email & pwd).
+//
+// POST /login
+//
+func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+
+	form := LoginForm{}
+	if err := parseForm(r, &form); err != nil {
+		panic(err)
+	}
 }
