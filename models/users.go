@@ -81,6 +81,28 @@ func (u *UserService) Create(user *User) error {
 	return u.db.Create(user).Error
 }
 
+// Update will update the provided user with all of the data in
+// the provided user object.
+func (u *UserService) Update(user *User) error {
+	return u.db.Save(user).Error
+}
+
+// Delete will delete the user with the provided ID
+func (u *UserService) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+
+	user := User{Model: gorm.Model{ID: id}}
+	return u.db.Delete(&user).Error
+}
+
+/////////////////////////////////////////////////////////////////////
+//
+// Query Methods
+//
+/////////////////////////////////////////////////////////////////////
+
 // ByID will look up a user with the provided ID.
 // If the user is found, we will return a nil error
 // If the user is not found, we will return ErrNotFound
@@ -156,25 +178,12 @@ func (u *UserService) InAgeRange(min, max int) ([]User, error) {
 	return users, nil
 }
 
-// Update will update the provided user with all of the data in
-// the provided user object.
-func (u *UserService) Update(user *User) error {
-	return u.db.Save(user).Error
-}
 
-// Delete will delete the user with the provided ID
-func (u *UserService) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
-	}
-
-	user := User{Model: gorm.Model{ID: id}}
-	return u.db.Delete(&user).Error
-}
-
+/////////////////////////////////////////////////////////////////////
 //
 // Helper Functions
 //
+/////////////////////////////////////////////////////////////////////
 
 //
 // first will query using the provided gorm.DB and it will get
