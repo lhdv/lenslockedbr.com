@@ -117,7 +117,7 @@ func (u *UserService) Authenticate(email, password string) (*User, error) {
 	}
 
 	err = bcrypt.CompareHashAndPassword(
-			[]byte(foundUser.PasswordHas),
+			[]byte(foundUser.PasswordHash),
 			[]byte(password+userPwPepper))
 
 	switch err {
