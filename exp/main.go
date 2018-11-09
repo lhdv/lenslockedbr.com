@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 
-	"lenslockedbr.com/models"
+	_ "lenslockedbr.com/models"
+	"lenslockedbr.com/rand"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 
 
 func main() {
+/*
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s " +  
                                 "dbname=%s sslmode=disable",
 		                 host, port, user, password, dbname)
@@ -94,4 +96,11 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("User find deleted by ID:", fetchById)
+*/
+
+	s, _ := rand.String(10)
+	fmt.Println(s, len(s))
+	s, _ = rand.RememberToken()
+	fmt.Println(s, len(s))
+	
 }
