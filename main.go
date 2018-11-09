@@ -52,6 +52,8 @@ func main() {
 
 	r.HandleFunc("/galleries/new", galleryC.New).Methods("GET")
 
+	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+
 	http.ListenAndServe(":3000", r)
 }
 
