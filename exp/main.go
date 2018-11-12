@@ -5,6 +5,7 @@ import (
 
 	_ "lenslockedbr.com/models"
 	"lenslockedbr.com/rand"
+	"lenslockedbr.com/hash"
 )
 
 const (
@@ -98,9 +99,14 @@ func main() {
 	fmt.Println("User find deleted by ID:", fetchById)
 */
 
+	// Generating random string
 	s, _ := rand.String(10)
 	fmt.Println(s, len(s))
 	s, _ = rand.RememberToken()
 	fmt.Println(s, len(s))
+
+	// Hashing a string
+	hmac := hash.NewHMAC("my-secret-key")
+	fmt.Println(hmac.Hash("this is my string to hash"))
 	
 }
