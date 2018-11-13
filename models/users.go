@@ -8,7 +8,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"lenslockedbr.com/rand"
+	"lenslockedbr.com/hash"
 )
+
+const hmacSecretKey = "secret-hmac-key"
 
 var (
 	// ErrNotFound is returned when a resource cannot be found
@@ -40,6 +43,7 @@ type User struct {
 
 type UserService struct {
 	db *gorm.DB
+	hmac hash.HMAC
 }
 
 func NewUserService(connectionInfo string) (*UserService, error) {
@@ -50,7 +54,12 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 
 	db.LogMode(true)
 
-	return &UserService{db: db}, nil
+	hmac := hash.NewHMAC(hmacSecretKey)
+
+	return &UserService{
+		db: db,
+		hmac: hmac,
+	}, nil
 }
 
 func (u *UserService) Close() error {
