@@ -103,12 +103,17 @@ func (u *UserService) Create(user *User) error {
 		user.Remember = token
 	}
 
+	user.RememberHash = u.hmac.Hash(user.Remember)
+
 	return u.db.Create(user).Error
 }
 
 // Update will update the provided user with all of the data in
 // the provided user object.
 func (u *UserService) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = u.hash.Hash(user.Remember)
+	}
 	return u.db.Save(user).Error
 }
 
