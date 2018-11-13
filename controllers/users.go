@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"lenslockedbr.com/models"
+	"lenslockedbr.com/rand"
 	"lenslockedbr.com/views"
 )
 
@@ -74,7 +75,13 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintln(w, "User is", user)
+	err := u.signIn(w, &user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 // Login is used to process the login form when a user tries to log
@@ -99,30 +106,70 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		case models.ErrInvalidPassword:
 			fmt.Fprintln(w, "Invalid password provided.")
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), 
+                                   http.StatusInternalServerError)
 		}
 		return
 	}
 
-	cookie := http.Cookie {
-		Name: "email",
-		Value: user.Email,
-	}
-
-	http.SetCookie(w, &cookie)
-
-	fmt.Fprintln(w, user)
-}
-
-// CookieTest is used to display cookies set on the current user
-func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("email")
+	err = u.signIn(w, user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintln(w, "Email is:", cookie.Value)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
+// CookieTest is used to display cookies set on the current user
+func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("remember_cookie")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	user, err := u.service.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintln(w, "User found is:", user)
+}
+
+/////////////////////////////////////////////////////////////////////
+//
+// HELPER METHODS
+//
+/////////////////////////////////////////////////////////////////////
+
+// signIn is used to sign the given user in via cookies
+func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+
+	// Set a remember token if none is found
+	if user.Remember == "" {
+
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+
+		user.Remember = token
+
+		err = u.service.Update(user)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	// Set a cookie with remember token from user
+	cookie := http.Cookie {
+		Name: "remember_cookie",
+		Value: user.Remember,
+	}
+	http.SetCookie(w, &cookie)
+
+	return nil
+}
