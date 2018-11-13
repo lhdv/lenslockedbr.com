@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	_ "lenslockedbr.com/models"
-	"lenslockedbr.com/rand"
-	"lenslockedbr.com/hash"
+	"lenslockedbr.com/models"
+	_ "lenslockedbr.com/hash"
+	_ "lenslockedbr.com/rand"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 
 
 func main() {
-/*
+
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s " +  
                                 "dbname=%s sslmode=disable",
 		                 host, port, user, password, dbname)
@@ -39,6 +39,7 @@ func main() {
 	user = models.User{ Name: "Foobar", 
 			    Age: 10,
                             Email: "foobar@example.com",
+			    Password: "321123",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -47,9 +48,23 @@ func main() {
 
 	fmt.Println("User created:", user)
 
+	// Verify that the user has a Remember and RememberHash
+	fmt.Printf("%+v\n", user)
+	if user.Remember == "" {
+		panic("Invalid remember token")
+	}
+
+	user2, err := us.ByRemember(user.Remember)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%+v\n", *user2)
+
 	user = models.User{ Name: "Test", 
 			Age: 15,
 			Email: "test@example.com",
+			Password: "abcdef",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -97,7 +112,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("User find deleted by ID:", fetchById)
-*/
+/*
 
 	// Generating random string
 	s, _ := rand.String(10)
@@ -108,5 +123,5 @@ func main() {
 	// Hashing a string
 	hmac := hash.NewHMAC("my-secret-key")
 	fmt.Println(hmac.Hash("this is my string to hash"))
-	
+*/	
 }

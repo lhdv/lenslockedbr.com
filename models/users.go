@@ -95,7 +95,7 @@ func (u *UserService) Create(user *User) error {
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
 
-	if user.Remember = ""{
+	if user.Remember == ""{
 		token, err := rand.RememberToken()
 		if err != nil {
 			return err
@@ -112,7 +112,7 @@ func (u *UserService) Create(user *User) error {
 // the provided user object.
 func (u *UserService) Update(user *User) error {
 	if user.Remember != "" {
-		user.RememberHash = u.hash.Hash(user.Remember)
+		user.RememberHash = u.hmac.Hash(user.Remember)
 	}
 	return u.db.Save(user).Error
 }
@@ -237,6 +237,20 @@ func (u *UserService) InAgeRange(min, max int) ([]User, error) {
 	return users, nil
 }
 
+// ByRemember looks up a user with the given remember token and returns
+// that user. This method will handle hashing the token for us.
+// Errors are the same as ByEmail.
+func (u *UserService) ByRemember(token string) (*User, error) {
+	var user User
+	rememberHash := u.hmac.Hash(token)
+	err := first(u.db.Where("remember_hash = ?", rememberHash), 
+                     &user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
 
 /////////////////////////////////////////////////////////////////////
 //
