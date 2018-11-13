@@ -6,6 +6,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
+
+	"lenslockedbr.com/rand"
 )
 
 var (
@@ -29,9 +31,11 @@ type User struct {
 	gorm.Model
 	Name         string
 	Age          int
-	Email        string `gorm:"not null.unique_index"`
+	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not nill;unique_index"`
 }
 
 type UserService struct {
@@ -81,6 +85,14 @@ func (u *UserService) Create(user *User) error {
 
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
+
+	if user.Remember = ""{
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
 
 	return u.db.Create(user).Error
 }
