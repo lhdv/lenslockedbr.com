@@ -28,6 +28,9 @@ var (
 
 	// Default user pepper for password
 	userPwPepper = "foobar"
+
+	_ UserDB = &userGorm{}
+	_ UserService = &userService{}
 )
 
 type User struct {
@@ -77,6 +80,7 @@ type UserDB interface {
 	DestructiveReset() error	
 }
 
+// UserService interface is a set of methods used to manipulate and
 // userGorm represents our database interaction layer and implements
 // the UserDB interface fully.
 type userGorm struct {
@@ -84,7 +88,21 @@ type userGorm struct {
 	hmac hash.HMAC
 }
 
-type UserService struct {
+// work with ther user model
+type UserService interface {
+
+	UserDB
+
+	// Authenticate will verify the provided email address
+	// and password are correct. If they are correct, the
+	// user corresponding to that email will be returned.
+	// Otherwise you will receive either:
+	// ErrNotFound, ErrInvalidPassword, or another error if
+	// something goes wrong.
+	Authenticate(email, password string) (*User, error)
+}
+
+type userService struct {
 	UserDB
 }
 
@@ -94,14 +112,25 @@ type userValidator struct {
 	UserDB
 }
 
-func NewUserService(connectionInfo string) (*UserService, error) {
+// THIS NO LONGER RETURNS A POINTER! Interfaces can be nil, so we don't
+// need to return a pointer here. Don't forget to update this first 
+// line - we removed the * character at the end where we write
+// (UserService, error)
+func NewUserService(connectionInfo string) (UserService, error) {
+
 	u, err := newUserGorm(connectionInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserService{
-		UserDB: userValidator {
+	// We also need to update how we construct the user service.
+	// We no longer have a UserService type to construct, and 
+	// instead need to use the userService type.
+	// This IS still a pointer, as our functions implementing the
+	// UserService are done with pointer receivers. eg:
+	//   func (us *userService) <- this uses a pointer
+	return &userService{
+		UserDB: &userValidator {
 			UserDB: u,
 		},
 	}, nil
@@ -197,7 +226,7 @@ func (u *userGorm) Delete(id uint) error {
 // If the email and password are both valid, this will return
 // user, nil
 // Otherwise if another error is encountered this will return nil, error
-func (u *UserService) Authenticate(email, password string) (*User, error) {
+func (u *userService) Authenticate(email, password string) (*User, error) {
 	foundUser, err := u.ByEmail(email)
 	if err != nil {
 		return nil, err
