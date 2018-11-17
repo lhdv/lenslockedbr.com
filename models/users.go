@@ -124,6 +124,12 @@ func runUserValFns(user *User, fns ...userValFn) error {
 	return nil
 }
 
+/////////////////////////////////////////////////////////////////////
+//
+// METHODS
+//
+/////////////////////////////////////////////////////////////////////
+
 // THIS NO LONGER RETURNS A POINTER! Interfaces can be nil, so we don't
 // need to return a pointer here. Don't forget to update this first 
 // line - we removed the * character at the end where we write
@@ -191,44 +197,13 @@ func (u *userGorm) AutoMigrate() error {
 // CreatedAt, and UpdatedAt fields.
 func (u *userValidator) Create(user *User) error {
 
-	if err := runUserValFns(user u.bcryptPassword); err != nil {
+	if err := runUserValFns(user, u.bcryptPassword,
+				      u.setRememberIfUnset,
+                                      u.hmacRemember); err != nil {
 		return err
 	}
-
-	if user.Remember == "" {
-		token, err := rand.RememberToken()
-		if err != nil {
-			return err
-		}
-		user.Remember = token
-	}
-
-	user.RememberHash = u.hmac.Hash(user.Remember)
 
 	return u.UserDB.Create(user)
-}
-
-// bcryptPassword will hash a user's password with an app-wide pepper
-// and bcrypt, which salts for us.
-func (u *userValidator) bcryptPassword(user *User) error {
-
-	if user.Password == "" {
-		// We DO NOT need to run this if the password
-		// hasn't been changed.
-		return nil
-	}
-	
-	pwBytes := []byte(user.Password + userPwPepper)
-	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
-						bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	user.PasswordHash = string(hashedBytes)
-	user.Password = ""
-
-	return nil
 }
 
 // Create will create the provided user and backfill data like
@@ -239,12 +214,10 @@ func (u *userGorm) Create(user *User) error {
 
 // Update will hash a remember token if it is provided
 func (u *userValidator) Update(user *User) error {
-	if err := runUserValFns(user u.bcryptPassword); err != nil {
-		return err
-	}
 
-	if user.Remember != "" {
-		user.RememberHash = u.hmac.Hash(user.Remember)
+	if err := runUserValFns(user, u.bcryptPassword,
+                                      u.hmacRemember); err != nil {
+		return err
 	}
 
 	return u.UserDB.Update(user)
@@ -298,6 +271,53 @@ func (u *userService) Authenticate(email, password string) (*User, error) {
 	default:
 		return nil, err
 	}
+}
+
+// bcryptPassword will hash a user's password with an app-wide pepper
+// and bcrypt, which salts for us.
+func (u *userValidator) bcryptPassword(user *User) error {
+
+	if user.Password == "" {
+		// We DO NOT need to run this if the password
+		// hasn't been changed.
+		return nil
+	}
+	
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
+						bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
+
+	return nil
+}
+
+func (u *userValidator) hmacRemember(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+	user.RememberHash = u.hmac.Hash(user.Remember)
+
+	return nil
+}
+
+func (u *userValidator) setRememberIfUnset(user *User) error {
+	if user.Remember != "" {
+		return nil
+	}
+
+	token, err := rand.RememberToken()
+	if err != nil {
+		return err
+	}
+
+	user.Remember = token
+
+	return nil
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -397,8 +417,16 @@ func (u *userGorm) ByRemember(rememberHashed string) (*User, error) {
 // ByRemember will hash the remember token and then call ByRemember on
 // the subsequent UserDB layer.
 func (u *userValidator) ByRemember(token string) (*User, error) {
-	rememberHash := u.hmac.Hash(token)
-	return u.UserDB.ByRemember(rememberHash)
+
+	user := User {
+		Remember: token,
+	}
+
+	if err := runUserValFns(&user, u.hmacRemember); err != nil {
+		return nil, err
+	}
+
+	return u.UserDB.ByRemember(user.RememberHash)
 }
 
 /////////////////////////////////////////////////////////////////////
