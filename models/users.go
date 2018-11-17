@@ -112,6 +112,18 @@ type userValidator struct {
 	hmac hash.HMAC
 }
 
+type userValFn func(*User) error
+
+func runUserValFns(user *User, fns ...userValFn) error {
+	for _, fn := range fns {
+		if err := fn(user); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // THIS NO LONGER RETURNS A POINTER! Interfaces can be nil, so we don't
 // need to return a pointer here. Don't forget to update this first 
 // line - we removed the * character at the end where we write
@@ -179,17 +191,11 @@ func (u *userGorm) AutoMigrate() error {
 // CreatedAt, and UpdatedAt fields.
 func (u *userValidator) Create(user *User) error {
 
-	pwBytes := []byte(user.Password + userPwPepper)
-	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
-						bcrypt.DefaultCost)
-	if err != nil {
+	if err := runUserValFns(user u.bcryptPassword); err != nil {
 		return err
 	}
 
-	user.PasswordHash = string(hashedBytes)
-	user.Password = ""
-
-	if user.Remember == ""{
+	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
 			return err
@@ -202,6 +208,29 @@ func (u *userValidator) Create(user *User) error {
 	return u.UserDB.Create(user)
 }
 
+// bcryptPassword will hash a user's password with an app-wide pepper
+// and bcrypt, which salts for us.
+func (u *userValidator) bcryptPassword(user *User) error {
+
+	if user.Password == "" {
+		// We DO NOT need to run this if the password
+		// hasn't been changed.
+		return nil
+	}
+	
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
+						bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = string(hashedBytes)
+	user.Password = ""
+
+	return nil
+}
+
 // Create will create the provided user and backfill data like
 // the ID, CreatedAt, and UpdatedAt fields.
 func (u *userGorm) Create(user *User) error {
@@ -210,6 +239,10 @@ func (u *userGorm) Create(user *User) error {
 
 // Update will hash a remember token if it is provided
 func (u *userValidator) Update(user *User) error {
+	if err := runUserValFns(user u.bcryptPassword); err != nil {
+		return err
+	}
+
 	if user.Remember != "" {
 		user.RememberHash = u.hmac.Hash(user.Remember)
 	}
