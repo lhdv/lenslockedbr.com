@@ -85,10 +85,9 @@ type UserDB interface {
 // the UserDB interface fully.
 type userGorm struct {
 	db *gorm.DB
-	hmac hash.HMAC
 }
 
-// work with ther user model
+// work with the user model
 type UserService interface {
 
 	UserDB
@@ -110,6 +109,7 @@ type userService struct {
 // data before passing it on to the next UserDB in our interface chain.
 type userValidator struct {
 	UserDB
+	hmac hash.HMAC
 }
 
 // THIS NO LONGER RETURNS A POINTER! Interfaces can be nil, so we don't
@@ -123,6 +123,13 @@ func NewUserService(connectionInfo string) (UserService, error) {
 		return nil, err
 	}
 
+	// this old line was in newUserGorm
+	hmac := hash.NewHMAC(hmacSecretKey)
+	uv := &userValidator {
+		UserDB: u,
+		hmac: hmac,
+	}
+
 	// We also need to update how we construct the user service.
 	// We no longer have a UserService type to construct, and 
 	// instead need to use the userService type.
@@ -130,9 +137,7 @@ func NewUserService(connectionInfo string) (UserService, error) {
 	// UserService are done with pointer receivers. eg:
 	//   func (us *userService) <- this uses a pointer
 	return &userService{
-		UserDB: &userValidator {
-			UserDB: u,
-		},
+		UserDB: uv,
 	}, nil
 }
 
@@ -144,11 +149,8 @@ func newUserGorm(connectionInfo string) (*userGorm, error) {
 
 	db.LogMode(true)
 
-	hmac := hash.NewHMAC(hmacSecretKey)
-
 	return &userGorm{
 		db: db,
-		hmac: hmac,
 	}, nil
 }
 
@@ -173,11 +175,13 @@ func (u *userGorm) AutoMigrate() error {
 	return nil
 }
 
-// Create will create the provided user and backfill data like
-// the ID, CreatedAt, and UpdatedAt fields.
-func (u *userGorm) Create(user *User) error {
+// Create will create the provided user and backfill data like ID,
+// CreatedAt, and UpdatedAt fields.
+func (u *userValidator) Create(user *User) error {
+
 	pwBytes := []byte(user.Password + userPwPepper)
-	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
+						bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -195,24 +199,41 @@ func (u *userGorm) Create(user *User) error {
 
 	user.RememberHash = u.hmac.Hash(user.Remember)
 
+	return u.UserDB.Create(user)
+}
+
+// Create will create the provided user and backfill data like
+// the ID, CreatedAt, and UpdatedAt fields.
+func (u *userGorm) Create(user *User) error {
 	return u.db.Create(user).Error
+}
+
+// Update will hash a remember token if it is provided
+func (u *userValidator) Update(user *User) error {
+	if user.Remember != "" {
+		user.RememberHash = u.hmac.Hash(user.Remember)
+	}
+
+	return u.UserDB.Update(user)
 }
 
 // Update will update the provided user with all of the data in
 // the provided user object.
 func (u *userGorm) Update(user *User) error {
-	if user.Remember != "" {
-		user.RememberHash = u.hmac.Hash(user.Remember)
-	}
 	return u.db.Save(user).Error
 }
 
 // Delete will delete the user with the provided ID
-func (u *userGorm) Delete(id uint) error {
+func (u *userValidator) Delete(id uint) error {
 	if id == 0 {
 		return ErrInvalidID
 	}
 
+	return u.UserDB.Delete(id)
+}
+
+// Delete will delete the user with the provided ID
+func (u *userGorm) Delete(id uint) error {
 	user := User{Model: gorm.Model{ID: id}}
 	return u.db.Delete(&user).Error
 }
@@ -328,18 +349,23 @@ func (u *userGorm) InAgeRange(min, max int) ([]User, error) {
 }
 
 // ByRemember looks up a user with the given remember token and returns
-// that user. This method will handle hashing the token for us.
-// Errors are the same as ByEmail.
-func (u *userGorm) ByRemember(token string) (*User, error) {
+// that user. This method expects the remember token already hashed
+func (u *userGorm) ByRemember(rememberHashed string) (*User, error) {
 	var user User
-	rememberHash := u.hmac.Hash(token)
-	err := first(u.db.Where("remember_hash = ?", rememberHash), 
+	err := first(u.db.Where("remember_hash = ?", rememberHashed), 
                      &user)
 	if err != nil {
 		return nil, err
 	}
 
 	return &user, nil
+}
+
+// ByRemember will hash the remember token and then call ByRemember on
+// the subsequent UserDB layer.
+func (u *userValidator) ByRemember(token string) (*User, error) {
+	rememberHash := u.hmac.Hash(token)
+	return u.UserDB.ByRemember(rememberHash)
 }
 
 /////////////////////////////////////////////////////////////////////
