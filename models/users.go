@@ -27,6 +27,10 @@ var (
 	// is used when attempting to authenticate a user.
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
 
+	// ErrEmailRequired is returned when an email address is not
+	// provided when creating a user
+	ErrEmailRequired = errors.New("models: email address is required")
+
 	// Default user pepper for password
 	userPwPepper = "foobar"
 
@@ -201,7 +205,8 @@ func (u *userValidator) Create(user *User) error {
 	err := runUserValFns(user, u.bcryptPassword,
 				   u.setRememberIfUnset,
                                    u.hmacRemember,
-				   u.normalizeEmail)
+				   u.normalizeEmail,
+				   u.requireEmail)
 	if err != nil {
 		return err
 	}
@@ -220,7 +225,8 @@ func (u *userValidator) Update(user *User) error {
 
 	err := runUserValFns(user, u.bcryptPassword,
                                    u.hmacRemember,
-				   u.normalizeEmail)
+				   u.normalizeEmail,
+				   u.requireEmail)
 	if err != nil {
 		return err
 	}
@@ -342,6 +348,14 @@ func (u *userValidator) idGreaterThan(n uint) userValFn {
 func (u *userValidator) normalizeEmail(user *User) error {
 	user.Email = strings.ToLower(user.Email)
 	user.Email = strings.TrimSpace(user.Email)
+
+	return nil
+}
+
+func (u *userValidator) requireEmail(user *User) error {
+	if user.Email == "" {
+		return ErrEmailRequired
+	}
 
 	return nil
 }
