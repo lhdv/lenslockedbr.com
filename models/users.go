@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 
 	"github.com/jinzhu/gorm"
@@ -30,6 +31,10 @@ var (
 	// ErrEmailRequired is returned when an email address is not
 	// provided when creating a user
 	ErrEmailRequired = errors.New("models: email address is required")
+
+	// ErrEmailInvalid is returned when an email address provided
+	// does not match any of our requirements
+	ErrEmailInvalid = errors.New("models: email address is not valid")
 
 	// Default user pepper for password
 	userPwPepper = "foobar"
@@ -115,6 +120,7 @@ type userService struct {
 type userValidator struct {
 	UserDB
 	hmac hash.HMAC
+	emailRegex *regexp.Regexp
 }
 
 type userValFn func(*User) error
@@ -146,12 +152,8 @@ func NewUserService(connectionInfo string) (UserService, error) {
 		return nil, err
 	}
 
-	// this old line was in newUserGorm
 	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := &userValidator {
-		UserDB: u,
-		hmac: hmac,
-	}
+	uv := newUserValidator(u, hmac) 
 
 	// We also need to update how we construct the user service.
 	// We no longer have a UserService type to construct, and 
@@ -162,6 +164,15 @@ func NewUserService(connectionInfo string) (UserService, error) {
 	return &userService{
 		UserDB: uv,
 	}, nil
+}
+
+func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+	return &userValidator {
+		UserDB: udb,
+		hmac: hmac,
+		emailRegex: regexp.MustCompile(
+                           `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+	}
 }
 
 func newUserGorm(connectionInfo string) (*userGorm, error) {
@@ -206,7 +217,8 @@ func (u *userValidator) Create(user *User) error {
 				   u.setRememberIfUnset,
                                    u.hmacRemember,
 				   u.normalizeEmail,
-				   u.requireEmail)
+				   u.requireEmail,
+				   u.emailFormat)
 	if err != nil {
 		return err
 	}
@@ -226,7 +238,8 @@ func (u *userValidator) Update(user *User) error {
 	err := runUserValFns(user, u.bcryptPassword,
                                    u.hmacRemember,
 				   u.normalizeEmail,
-				   u.requireEmail)
+				   u.requireEmail,
+				   u.emailFormat)
 	if err != nil {
 		return err
 	}
@@ -355,6 +368,18 @@ func (u *userValidator) normalizeEmail(user *User) error {
 func (u *userValidator) requireEmail(user *User) error {
 	if user.Email == "" {
 		return ErrEmailRequired
+	}
+
+	return nil
+}
+
+func (u *userValidator) emailFormat(user *User) error {
+	if user.Email == "" {
+		return nil
+	}
+
+	if !u.emailRegex.MatchString(user.Email) {
+		return ErrEmailInvalid
 	}
 
 	return nil
