@@ -231,8 +231,13 @@ func (u *userGorm) Update(user *User) error {
 
 // Delete will delete the user with the provided ID
 func (u *userValidator) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
+
+	var user User
+	user.ID = id
+
+	err := runUserValFns(&user, u.idGreaterThan(0))
+	if err != nil {
+		return nil
 	}
 
 	return u.UserDB.Delete(id)
@@ -318,6 +323,15 @@ func (u *userValidator) setRememberIfUnset(user *User) error {
 	user.Remember = token
 
 	return nil
+}
+
+func (u *userValidator) idGreaterThan(n uint) userValFn {
+	return userValFn(func(user *User) error {
+		if user.ID <= n {
+			return ErrInvalidID
+		}
+		return nil
+	})
 }
 
 /////////////////////////////////////////////////////////////////////
