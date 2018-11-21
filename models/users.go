@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -197,9 +198,11 @@ func (u *userGorm) AutoMigrate() error {
 // CreatedAt, and UpdatedAt fields.
 func (u *userValidator) Create(user *User) error {
 
-	if err := runUserValFns(user, u.bcryptPassword,
-				      u.setRememberIfUnset,
-                                      u.hmacRemember); err != nil {
+	err := runUserValFns(user, u.bcryptPassword,
+				   u.setRememberIfUnset,
+                                   u.hmacRemember,
+				   u.normalizeEmail)
+	if err != nil {
 		return err
 	}
 
@@ -215,8 +218,10 @@ func (u *userGorm) Create(user *User) error {
 // Update will hash a remember token if it is provided
 func (u *userValidator) Update(user *User) error {
 
-	if err := runUserValFns(user, u.bcryptPassword,
-                                      u.hmacRemember); err != nil {
+	err := runUserValFns(user, u.bcryptPassword,
+                                   u.hmacRemember,
+				   u.normalizeEmail)
+	if err != nil {
 		return err
 	}
 
@@ -334,6 +339,13 @@ func (u *userValidator) idGreaterThan(n uint) userValFn {
 	})
 }
 
+func (u *userValidator) normalizeEmail(user *User) error {
+	user.Email = strings.ToLower(user.Email)
+	user.Email = strings.TrimSpace(user.Email)
+
+	return nil
+}
+
 /////////////////////////////////////////////////////////////////////
 //
 // Query Methods
@@ -378,6 +390,21 @@ func (u *userGorm) ByEmail(email string) (*User, error) {
 
 	return &user, nil
 
+}
+
+// ByEmail will normalize an email address before passing it on to the
+// database layer to perform the query.
+func (u *userValidator) ByEmail(email string) (*User, error) {
+	user := User {
+		Email: email,
+	}
+
+	err := runUserValFns(&user, u.normalizeEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	return u.UserDB.ByEmail(user.Email)
 }
 
 // ByAge will look up a user with the provided age.
