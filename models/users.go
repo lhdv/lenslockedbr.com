@@ -36,6 +36,10 @@ var (
 	// does not match any of our requirements
 	ErrEmailInvalid = errors.New("models: email address is not valid")
 
+	// ErrEmailTaken is returned when an update or create is attempted
+	// with an email address that is already in use.
+	ErrEmailTaken = errors.New("models: email address is already taken")
+
 	// Default user pepper for password
 	userPwPepper = "foobar"
 
@@ -218,7 +222,8 @@ func (u *userValidator) Create(user *User) error {
                                    u.hmacRemember,
 				   u.normalizeEmail,
 				   u.requireEmail,
-				   u.emailFormat)
+				   u.emailFormat,
+				   u.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -239,7 +244,8 @@ func (u *userValidator) Update(user *User) error {
                                    u.hmacRemember,
 				   u.normalizeEmail,
 				   u.requireEmail,
-				   u.emailFormat)
+				   u.emailFormat,
+				   u.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -380,6 +386,31 @@ func (u *userValidator) emailFormat(user *User) error {
 
 	if !u.emailRegex.MatchString(user.Email) {
 		return ErrEmailInvalid
+	}
+
+	return nil
+}
+
+func (u *userValidator) emailIsAvail (user *User) error {
+	existing, err := u.ByEmail(user.Email)
+	if err == ErrNotFound {
+		// Email address is available if we don't find
+		// a user with that email address.
+		return nil
+	}
+
+	// We can't continue our validation without a successful
+	// query, so if we get any error other than ErrNotFound we
+	// should return it.
+	if err != nil {
+		return err
+	}
+
+	// If we get here that means we found a user w/ this email
+	// address, so we need to see if this is the same user we
+	// are updating, or if we have a conflict.
+	if user.ID != existing.ID {
+		return ErrEmailTaken
 	}
 
 	return nil
