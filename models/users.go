@@ -42,7 +42,19 @@ var (
 
 	// ErrPasswordTooShort is returned when a user tries to set a 
 	// password that is less than 8 characters long.
-	ErrPasswordTooShort := errors.New("models: password must be at least 8 characters long")
+	ErrPasswordTooShort = errors.New("models: password must be at least 8 characters long")
+
+	// ErrPasswordRequired is returned when a create is attempted
+	// without a user password provided.
+	ErrPasswordRequired = errors.New("models: password is required")
+
+	// ErrRememberRequired is returned when a create or update is
+	// attempted without a user remember token hash
+	ErrRememberRequired = errors.New("models: remember token is required")
+
+	// ErrRememberTooShort is returned when a remember token is not
+	// at least 32 bytes
+	ErrRememberTooShort = errors.New("models: remember token must be at least 32 bytes")
 
 	// Default user pepper for password
 	userPwPepper = "foobar"
@@ -221,10 +233,14 @@ func (u *userGorm) AutoMigrate() error {
 // CreatedAt, and UpdatedAt fields.
 func (u *userValidator) Create(user *User) error {
 
-	err := runUserValFns(user, u.passwordMinLength,
+	err := runUserValFns(user, u.passwordRequired,
+				   u.passwordMinLength,
                                    u.bcryptPassword,
+				   u.passwordHashRequired,
 				   u.setRememberIfUnset,
+				   u.rememberMinBytes,
                                    u.hmacRemember,
+				   u.rememberHashRequired,
 				   u.normalizeEmail,
 				   u.requireEmail,
 				   u.emailFormat,
@@ -247,7 +263,10 @@ func (u *userValidator) Update(user *User) error {
 
 	err := runUserValFns(user, u.passwordMinLength,
                                    u.bcryptPassword,
+				   u.passwordHashRequired,
+				   u.rememberMinBytes,
                                    u.hmacRemember,
+				   u.rememberHashRequired,
 				   u.normalizeEmail,
 				   u.requireEmail,
 				   u.emailFormat,
@@ -434,6 +453,46 @@ func (u *userValidator) passwordMinLength(user *User) error {
 	return nil
 }
 
+func (u *userValidator) passwordRequired(user *User) error {
+	if user.Password == "" {
+		return ErrPasswordRequired
+	}
+
+	return nil
+}
+
+func (u *userValidator) passwordHashRequired(user *User) error {
+	if user.PasswordHash == "" {
+		return ErrPasswordRequired
+	}
+
+	return nil
+}
+
+func (u *userValidator) rememberMinBytes(user *User) error {
+	if user.Remember == "" {
+		return nil
+	}
+
+	n, err := rand.NBytes(user.Remember)
+	if err != nil {
+		return err
+	}
+
+	if n < 32 {
+		return ErrRememberTooShort
+	}
+
+	return nil
+}
+
+func (u *userValidator) rememberHashRequired(user *User) error {
+	if user.RememberHash == "" {
+		return ErrRememberRequired
+	}
+	
+	return nil
+}
 /////////////////////////////////////////////////////////////////////
 //
 // Query Methods
