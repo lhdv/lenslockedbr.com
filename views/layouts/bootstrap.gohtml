@@ -10,9 +10,10 @@
     {{template "navbar"}}
 
     <div class="container-fluid">
-      <!-- Add the period after "alert" below -->
-      {{template "alert" .}}
-      {{template "yield" .}}
+      {{if .Alert}}
+      {{template "alert" .Alert}}
+      {{end}}
+      {{template "yield" .Yield}}
       {{template "footer"}}
     </div>
 
