@@ -1,5 +1,9 @@
 package views
 
+import (
+	"log"
+)
+
 const (
 	AlertLvlError = "danger"
 	AlertLvlWarning = "warning"
@@ -12,10 +16,9 @@ const (
                           "and contact us if the problem persists."
 )
 
-// Data is the top level structure that views expect data to come in.
-type Data struct {
-	Alert *Alert
-	Yield interface{}
+type PublicError interface {
+	error
+	Public() string
 }
 
 // Alert is used to render Bootstrap Alert messages in templates
@@ -23,3 +26,26 @@ type Alert struct {
 	Level string
 	Message string
 }
+
+// Data is the top level structure that views expect data to come in.
+type Data struct {
+	Alert *Alert
+	Yield interface{}
+}
+
+func (d *Data) SetAlert(err error) { 
+	var msg string
+
+	if pErr, ok := err.(PublicError); ok {
+		msg = pErr.Public()
+	} else {
+		log.Println(err)
+		msg = AlertMsgGeneric
+	}
+
+	d.Alert = &Alert {
+		Level: AlertLvlError,
+		Message: msg,
+	}
+}
+
