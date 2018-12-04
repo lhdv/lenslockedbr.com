@@ -96,9 +96,13 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 //
 func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 
+	var vd views.Data
+
 	form := LoginForm{}
 	if err := parseForm(r, &form); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
+		return
 	}
 
 	user, err := u.service.Authenticate(form.Email,
@@ -107,19 +111,19 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 
 		switch err {
 		case models.ErrNotFound:
-			fmt.Fprintln(w, "Invalid email address.")
-		case models.ErrPasswordIncorrect:
-			fmt.Fprintln(w, "Invalid password provided.")
+			vd.AlertError("No user exists with that " +
+                                         "email address")
 		default:
-			http.Error(w, err.Error(), 
-                                   http.StatusInternalServerError)
+			vd.SetAlert(err)
 		}
+		u.LoginView.Render(w, vd)
 		return
 	}
 
 	err = u.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
 		return
 	}
 
