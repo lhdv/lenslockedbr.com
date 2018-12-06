@@ -183,13 +183,9 @@ func (e modelError) Public() string {
 // need to return a pointer here. Don't forget to update this first 
 // line - we removed the * character at the end where we write
 // (UserService, error)
-func NewUserService(connectionInfo string) (UserService, error) {
+func NewUserService(db *gorm.DB) UserService {
 
-	u, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-
+	u := &userGorm{db}
 	hmac := hash.NewHMAC(hmacSecretKey)
 	uv := newUserValidator(u, hmac) 
 
@@ -201,7 +197,7 @@ func NewUserService(connectionInfo string) (UserService, error) {
 	//   func (us *userService) <- this uses a pointer
 	return &userService{
 		UserDB: uv,
-	}, nil
+	}
 }
 
 func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
@@ -211,19 +207,6 @@ func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 		emailRegex: regexp.MustCompile(
                            `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
 	}
-}
-
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	db.LogMode(true)
-
-	return &userGorm{
-		db: db,
-	}, nil
 }
 
 func (u *userGorm) Close() error {

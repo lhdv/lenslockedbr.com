@@ -23,6 +23,6 @@ type galleryGorm struct {
 	db *gorm.DB
 }
 
-func (g *galleryGorm) Create(gallery *Galery) error {
+func (g *galleryGorm) Create(gallery *Gallery) error {
 	return nil
 }
