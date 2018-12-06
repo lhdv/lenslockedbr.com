@@ -106,13 +106,6 @@ type UserDB interface {
 	Create(user *User) error
 	Update(user *User) error
 	Delete(id uint) error
-
-	// Used to close a DB connection
-	Close() error
-
-	// Migration helpers
-	AutoMigrate() error
-	DestructiveReset() error	
 }
 
 // UserService interface is a set of methods used to manipulate and
@@ -207,27 +200,6 @@ func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
 		emailRegex: regexp.MustCompile(
                            `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
 	}
-}
-
-func (u *userGorm) Close() error {
-	return u.db.Close()
-}
-
-// DestructiveReset drops the user table and rebuilds it
-func (u *userGorm) DestructiveReset() error {
-	err := u.db.DropTableIfExists(&User{}).Error
-	if err != nil {
-		return err
-	}
-	return u.AutoMigrate()
-}
-
-// AutoMigrate will attempt to automatically migrate the users table
-func (u *userGorm) AutoMigrate() error {
-	if err := u.db.AutoMigrate(&User{}).Error; err != nil {
-		return err
-	}
-	return nil
 }
 
 // Create will create the provided user and backfill data like ID,
