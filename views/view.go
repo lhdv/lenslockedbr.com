@@ -1,7 +1,9 @@
 package views
 
 import (
+	"bytes"
 	"html/template"
+	"io"
 	"net/http"
 	"path/filepath"
 )
@@ -34,7 +36,9 @@ func NewView(layout string, notfound bool, files ...string) *View {
 	}
 }
 
-func (v *View) Render(w http.ResponseWriter, data interface{}) error {
+func (v *View) Render(w http.ResponseWriter, data interface{}) {
+	var buf bytes.Buffer
+
 	w.Header().Set("Content-Type", "text/html")
 
 	switch data.(type) {
@@ -46,17 +50,27 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) error {
 		}
 	}
 
-	if v.NotFound {
-		w.WriteHeader(http.StatusNotFound)
+//	if v.NotFound {
+//		w.WriteHeader(http.StatusNotFound)
+//		return
+//	}
+
+	err := v.Template.ExecuteTemplate(&buf, v.Layout, data)
+	if err != nil {
+		http.Error(w, "Something went wrong. If the problem "+
+                              "persists, please email " + 
+                              "support@lenslockedbr.com",
+                           http.StatusInternalServerError)
+		return
 	}
 
-	return v.Template.ExecuteTemplate(w, v.Layout, data)
+	io.Copy(w, &buf)
+
+
 }
 
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := v.Render(w, nil); err != nil {
-		panic(err)
-	}
+	v.Render(w, nil)
 }
 
 /////////////////////////////////////////////////////////////////////

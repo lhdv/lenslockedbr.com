@@ -18,7 +18,5 @@ func NewGalleries() *Galleries {
 
 
 func (g *Galleries) New(w http.ResponseWriter, r *http.Request) {
-	if err := g.NewView.Render(w, nil); err != nil {
-		panic(err)
-	}
+	g.NewView.Render(w, nil)
 }
