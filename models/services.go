@@ -22,7 +22,7 @@ func NewServices(connectionInfo string) (*Services, error) {
 	// the UserService yet.
 	return &Services {
 		User: NewUserService(db),
-		Gallery: &galleryGorm{},
+		Gallery: NewGalleryService(db),
 		db: db,
 	}, nil
 }

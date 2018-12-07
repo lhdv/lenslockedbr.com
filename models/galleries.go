@@ -4,6 +4,8 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+var _ GalleryDB = &galleryGorm{}
+
 type Gallery struct {
 	gorm.Model
 	
@@ -11,12 +13,30 @@ type Gallery struct {
 	Title string `gorm:not_null`
 }
 
+type GalleryDB interface {
+	Create(gallery *Gallery) error
+}
+
 type GalleryService interface {
 	GalleryDB
 }
 
-type GalleryDB interface {
-	Create(gallery *Gallery) error
+func NewGalleryService(db *gorm.DB) GalleryService {
+	return &galleryService {
+		GalleryDB: &galleryValidator {
+			GalleryDB: &galleryGorm {
+				db: db,
+			},
+		},
+	}
+}
+
+type galleryService struct {
+	GalleryDB
+}
+
+type galleryValidator struct {
+	GalleryDB
 }
 
 type galleryGorm struct {
@@ -24,5 +44,6 @@ type galleryGorm struct {
 }
 
 func (g *galleryGorm) Create(gallery *Gallery) error {
-	return nil
+	return g.db.Create(gallery).Error
 }
+
