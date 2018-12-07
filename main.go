@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"lenslockedbr.com/controllers"
@@ -35,7 +36,7 @@ func main() {
 
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
-	galleryC := controllers.NewGalleries()
+	galleriesC := controllers.NewGalleries(services.Gallery)
 
 	r := mux.NewRouter()
 
@@ -50,9 +51,13 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 
-	r.HandleFunc("/galleries/new", galleryC.New).Methods("GET")
+	// Gallery routes
+	r.HandleFunc("/galleries/new", galleriesC.New).Methods("GET")
+	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+
+	log.Println("Starting the server on :3000...")
 
 	http.ListenAndServe(":3000", r)
 }
