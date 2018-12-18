@@ -65,8 +65,6 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) {
 	}
 
 	io.Copy(w, &buf)
-
-
 }
 
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {

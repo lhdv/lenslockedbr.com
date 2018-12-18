@@ -21,8 +21,8 @@ func NewServices(connectionInfo string) (*Services, error) {
 	// And next we need to construct services, but we can't construct
 	// the UserService yet.
 	return &Services {
-		User: NewUserService(db),
 		Gallery: NewGalleryService(db),
+		User: NewUserService(db),
 		db: db,
 	}, nil
 }

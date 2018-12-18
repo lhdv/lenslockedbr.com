@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"lenslockedbr.com/controllers"
+	"lenslockedbr.com/middleware"
 	"lenslockedbr.com/models"
 
 	"github.com/gorilla/mux"
@@ -38,6 +39,11 @@ func main() {
 	usersC := controllers.NewUsers(services.User)
 	galleriesC := controllers.NewGalleries(services.Gallery)
 
+	// Add middleware call to validate if the user is logged in
+	requireUserMw := middleware.RequireUser{
+		UserService: services.User,
+	}
+
 	r := mux.NewRouter()
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
@@ -52,8 +58,10 @@ func main() {
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 
 	// Gallery routes
-	r.HandleFunc("/galleries/new", galleriesC.New).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	r.Handle("/galleries/new", 
+                 requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
+	r.HandleFunc("/galleries", 
+                 requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 
