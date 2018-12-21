@@ -74,10 +74,15 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = id
-
-	gallery := models.Gallery {
-		Title: "A temp fake gallery with ID: " + idStr,
+	gallery, err := g.gs.ByID(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+		default:
+			http.Error(w, "Whoops! Something went wrong.", http.StatusNotFound)
+		}
+		return
 	}
 
 	var vd views.Data
