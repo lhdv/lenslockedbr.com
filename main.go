@@ -35,16 +35,16 @@ func main() {
 	defer services.Close()
 	services.AutoMigrate()
 
+	r := mux.NewRouter()
+
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User)
-	galleriesC := controllers.NewGalleries(services.Gallery)
+	galleriesC := controllers.NewGalleries(services.Gallery, r)
 
 	// Add middleware call to validate if the user is logged in
 	requireUserMw := middleware.RequireUser{
 		UserService: services.User,
 	}
-
-	r := mux.NewRouter()
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 
@@ -61,7 +61,7 @@ func main() {
 	r.Handle("/galleries/new", 
                  requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
 	r.HandleFunc("/galleries/{id:[0-9]+}", 
-                 galleriesC.Show).Methods("GET")
+                 galleriesC.Show).Methods("GET").Name(controllers.ShowGallery)
 	r.HandleFunc("/galleries", 
                  requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
 
