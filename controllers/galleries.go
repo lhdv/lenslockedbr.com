@@ -15,6 +15,10 @@ const (
 	ShowGallery = "show_gallery"
 )
 
+type GalleryForm struct {
+	Title string `schema:"title"`
+}
+
 type Galleries struct {
 	NewView *views.View
 	ShowView *views.View
@@ -103,6 +107,3 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 
-type GalleryForm struct {
-	Title string `schema:"title"`
-}
