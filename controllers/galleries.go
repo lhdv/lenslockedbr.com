@@ -22,6 +22,7 @@ type GalleryForm struct {
 type Galleries struct {
 	NewView *views.View
 	ShowView *views.View
+	EditView *views.View
         gs models.GalleryService
 	r *mux.Router
 }
@@ -32,6 +33,8 @@ func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
                                        "galleries/new"),
 		ShowView: views.NewView("bootstrap", false, 
                                        "galleries/show"),
+                EditView: views.NewView("bootstrap", false,
+                                       "galleries/edit"),
 		gs: gs,
 		r: r,
 	}
@@ -75,29 +78,8 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
-	// First we get the vars like we saw earlier. We do this so we
-	// can get variables from our path like the "id" variable.
-	vars := mux.Vars(r)
-
-	// Next we need to get the "id" variable from our vars.
-	idStr := vars["id"]
-
-	// Our idStr is a string, so we use the Atoi function to
-	// convert it int an integer.
-	id, err := strconv.Atoi(idStr)
+	gallery, err := g.galleryByID(w, r)
 	if err != nil {
-		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
-		return
-	}
-
-	gallery, err := g.gs.ByID(uint(id))
-	if err != nil {
-		switch err {
-		case models.ErrNotFound:
-			http.Error(w, "Gallery not found", http.StatusNotFound)
-		default:
-			http.Error(w, "Whoops! Something went wrong.", http.StatusNotFound)
-		}
 		return
 	}
 
@@ -105,5 +87,52 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 	vd.Yield = gallery
 	g.ShowView.Render(w, vd)
 }
+
+func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(w, r)
+	if err != nil {
+		return
+	}
+
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "You do not have permission to edit " +
+                              "this gallery.",
+                              http.StatusForbidden)
+		return
+	}
+
+	var vd views.Data
+	vd.Yield = gallery
+	g.EditView.Render(w, vd)
+}
+
+func (g *Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
+		return nil, err
+	}
+
+	gallery, err := g.gs.ByID(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", 
+                                      http.StatusNotFound)
+		default:
+			http.Error(w, "Whoops! Something went wrong.", 
+                                      http.StatusInternalServerError)
+		}
+
+		return nil, err
+	}
+
+	return gallery, nil
+}
+
 
 
