@@ -69,6 +69,9 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/edit",
                  requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET")
 
+	r.HandleFunc("/galleries/{id:[0-9]+}/update",
+                 requireUserMw.ApplyFn(galleriesC.Update)).Methods("POST")
+
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 
 	log.Println("Starting the server on :3000...")
