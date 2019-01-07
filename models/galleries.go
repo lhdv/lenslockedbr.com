@@ -29,6 +29,7 @@ type Gallery struct {
 type GalleryDB interface {
 	Create(gallery *Gallery) error
 	Update(gallery *Gallery) error
+	Delete(id uint) error
 
 	ByID(id uint) (*Gallery, error)
 }
@@ -71,6 +72,14 @@ func (gv *galleryValidator) titleRequired(g *Gallery) error {
 	return nil
 }
 
+func (gv *galleryValidator) nonZeroID(gallery *Gallery) error {
+	if gallery.ID <= 0 {
+		return ErrIDInvalid
+	}
+
+	return nil
+}
+
 func (gv *galleryValidator) Create(gallery *Gallery) error {
 
 	err := runGalleryValFns(gallery,
@@ -97,6 +106,20 @@ func (gv *galleryValidator) Update(gallery *Gallery) error {
 	return gv.GalleryDB.Update(gallery)
 }
 
+func (gv *galleryValidator) Delete(id uint) error {
+
+	var gallery Gallery
+	gallery.ID = id
+
+	err := runGalleryValFns(&gallery,
+			gv.nonZeroID)
+	if err != nil {
+		return err
+	}
+
+	return gv.GalleryDB.Delete(gallery.ID)
+}
+
 type galleryGorm struct {
 	db *gorm.DB
 }
@@ -107,6 +130,12 @@ func (g *galleryGorm) Create(gallery *Gallery) error {
 
 func (g *galleryGorm) Update(gallery *Gallery) error {
 	return g.db.Save(gallery).Error
+}
+
+func (g *galleryGorm) Delete(id uint) error {
+	gallery := Gallery { Model: gorm.Model { ID: id } }
+
+	return g.db.Delete(&gallery).Error
 }
 
 func (g *galleryGorm) ByID(id uint) (*Gallery, error) {
