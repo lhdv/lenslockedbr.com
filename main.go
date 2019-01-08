@@ -57,7 +57,13 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 
+	//
 	// Gallery routes
+	//
+
+	r.Handle("/galleries", 
+		requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET")
+
 	r.Handle("/galleries/new", 
                  requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
 

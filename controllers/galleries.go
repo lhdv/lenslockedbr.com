@@ -24,6 +24,7 @@ type Galleries struct {
 	NewView *views.View
 	ShowView *views.View
 	EditView *views.View
+	IndexView *views.View
         gs models.GalleryService
 	r *mux.Router
 }
@@ -36,6 +37,8 @@ func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
                                        "galleries/show"),
                 EditView: views.NewView("bootstrap", false,
                                        "galleries/edit"),
+                IndexView: views.NewView("bootstrap", false,
+                                       "galleries/index"),
 		gs: gs,
 		r: r,
 	}
@@ -172,6 +175,22 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "successfully deleted!")
+}
+
+func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
+
+	user := context.User(r.Context())
+
+	galleries, err := g.gs.ByUserID(user.ID)
+	if err != nil {
+		http.Error(w, "Something went wrong.",
+                              http.StatusInternalServerError)
+		return
+	}
+
+	var vd views.Data
+	vd.Yield = galleries
+	g.IndexView.Render(w, vd)
 }
 
 func (g *Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
