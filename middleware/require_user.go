@@ -12,7 +12,7 @@ type RequireUser struct {
 }
 
 // ApplyFn will return an http.HandlerFunc that will check to see if a
-// user is logged in and then either cll new(w, r)if they are, or
+// user is logged in and then either call next(w, r)if they are, or
 // redirect them to the login page if they are not.
 func (mw *RequireUser) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	// We want to return a dynamically created
