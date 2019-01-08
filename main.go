@@ -62,24 +62,28 @@ func main() {
 	//
 
 	r.Handle("/galleries", 
-		requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET")
+		requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET").
+		Name(controllers.IndexGallery)
 
 	r.Handle("/galleries/new", 
-                 requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
+		requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
 
 	r.HandleFunc("/galleries/{id:[0-9]+}", 
-                 galleriesC.Show).Methods("GET").Name(controllers.ShowGallery)
+		galleriesC.Show).Methods("GET").
+                Name(controllers.ShowGallery)
+
 	r.HandleFunc("/galleries", 
                  requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/edit",
-                 requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET")
+		requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET").
+		Name(controllers.EditGallery)
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/update",
-                 requireUserMw.ApplyFn(galleriesC.Update)).Methods("POST")
+		requireUserMw.ApplyFn(galleriesC.Update)).Methods("POST")
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/delete",
-                 requireUserMw.ApplyFn(galleriesC.Delete)).Methods("POST")
+		requireUserMw.ApplyFn(galleriesC.Delete)).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,7 +12,9 @@ import (
 )
 
 const (
+	IndexGallery = "index_galleries"
 	ShowGallery = "show_gallery"
+	EditGallery = "edit_gallery"
 )
 
 type GalleryForm struct {
@@ -71,7 +72,7 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := g.r.Get(ShowGallery).URL("id",
+	url, err := g.r.Get(EditGallery).URL("id",
 		strconv.Itoa(int(gallery.ID)))
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusFound)
@@ -174,7 +175,13 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 		g.EditView.Render(w, vd)
 	}
 
-	fmt.Fprintln(w, "successfully deleted!")
+	url, err := g.r.Get(IndexGallery).URL()
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
