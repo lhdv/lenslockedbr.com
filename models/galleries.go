@@ -32,6 +32,7 @@ type GalleryDB interface {
 	Delete(id uint) error
 
 	ByID(id uint) (*Gallery, error)
+	ByUserID(userID uint) ([]Gallery, error)
 }
 
 type GalleryService interface {
@@ -51,6 +52,56 @@ func NewGalleryService(db *gorm.DB) GalleryService {
 		},
 	}
 }
+
+//
+// Gorm
+//
+
+type galleryGorm struct {
+	db *gorm.DB
+}
+
+func (g *galleryGorm) Create(gallery *Gallery) error {
+	return g.db.Create(gallery).Error
+}
+
+func (g *galleryGorm) Update(gallery *Gallery) error {
+	return g.db.Save(gallery).Error
+}
+
+func (g *galleryGorm) Delete(id uint) error {
+	gallery := Gallery { Model: gorm.Model { ID: id } }
+
+	return g.db.Delete(&gallery).Error
+}
+
+func (g *galleryGorm) ByID(id uint) (*Gallery, error) {
+	var gallery Gallery
+	db := g.db.Where("id = ?", id)
+	err := first(db, &gallery)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gallery, nil
+}
+
+func (g *galleryGorm) ByUserID(userID uint) ([]Gallery, error) {
+
+	var galleries []Gallery
+
+	db := g.db.Where("user_id = ?", userID)
+	
+	if err := db.Find(&galleries).Error ; err != nil {
+		return nil, err
+	}
+
+	return galleries, nil
+}
+
+//
+// Validators
+//
 
 type galleryValidator struct {
 	GalleryDB
@@ -118,35 +169,6 @@ func (gv *galleryValidator) Delete(id uint) error {
 	}
 
 	return gv.GalleryDB.Delete(gallery.ID)
-}
-
-type galleryGorm struct {
-	db *gorm.DB
-}
-
-func (g *galleryGorm) Create(gallery *Gallery) error {
-	return g.db.Create(gallery).Error
-}
-
-func (g *galleryGorm) Update(gallery *Gallery) error {
-	return g.db.Save(gallery).Error
-}
-
-func (g *galleryGorm) Delete(id uint) error {
-	gallery := Gallery { Model: gorm.Model { ID: id } }
-
-	return g.db.Delete(&gallery).Error
-}
-
-func (g *galleryGorm) ByID(id uint) (*Gallery, error) {
-	var gallery Gallery
-	db := g.db.Where("id = ?", id)
-	err := first(db, &gallery)
-	if err != nil {
-		return nil, err
-	}
-
-	return &gallery, nil
 }
 
 type galleryValFn func(*Gallery) error
