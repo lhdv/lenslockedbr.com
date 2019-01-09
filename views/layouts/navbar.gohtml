@@ -21,6 +21,9 @@
         <li><a href="/about">About</a></li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
+	{{ if .User }}
+        <li><a href="#">{{ .User.Name }}({{ .User.Email }})</a></li>
+	{{ end }}
         <li><a href="/login">Log In</a></li>
         <li><a href="/signup">Sign Up</a></li>
       </ul>
