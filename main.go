@@ -41,10 +41,10 @@ func main() {
 	usersC := controllers.NewUsers(services.User)
 	galleriesC := controllers.NewGalleries(services.Gallery, r)
 
-	// Add middleware call to validate if the user is logged in
-	requireUserMw := middleware.RequireUser{
+	userMw := middleware.User {
 		UserService: services.User,
 	}
+	requireUserMw := middleware.RequireUser{ }
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 
@@ -89,6 +89,6 @@ func main() {
 
 	log.Println("Starting the server on :3000...")
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":3000", userMw.Apply(r))
 }
 

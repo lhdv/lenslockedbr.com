@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+
+	"lenslockedbr.com/context"
 )
 
 var (
@@ -36,26 +38,25 @@ func NewView(layout string, notfound bool, files ...string) *View {
 	}
 }
 
-func (v *View) Render(w http.ResponseWriter, data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request, 
+                      data interface{}) {
 	var buf bytes.Buffer
+	var vd Data
 
 	w.Header().Set("Content-Type", "text/html")
 
-	switch data.(type) {
+	switch d := data.(type) {
 	case Data:
-		// do nothing
+		vd = d
 	default:
-		data = Data {
+		vd = Data {
 			Yield: data,
-		}
+		}	
 	}
 
-//	if v.NotFound {
-//		w.WriteHeader(http.StatusNotFound)
-//		return
-//	}
+	vd.User = context.User(r.Context())
 
-	err := v.Template.ExecuteTemplate(&buf, v.Layout, data)
+	err := v.Template.ExecuteTemplate(&buf, v.Layout, vd)
 	if err != nil {
 		http.Error(w, "Something went wrong. If the problem "+
                               "persists, please email " + 
@@ -68,7 +69,7 @@ func (v *View) Render(w http.ResponseWriter, data interface{}) {
 }
 
 func (v *View) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	v.Render(w, nil)
+	v.Render(w, r, nil)
 }
 
 /////////////////////////////////////////////////////////////////////
