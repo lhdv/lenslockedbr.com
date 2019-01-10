@@ -47,7 +47,13 @@
 {{ end }}
 
 {{ define "galleryImages" }}
-<p>Coing soon...</p>
+<ul>
+  {{ range .Images }}
+  <li>
+    {{ . }}
+  </li>
+  {{ end }}
+</ul>
 {{ end }}
 
 {{ define "uploadImageForm" }}

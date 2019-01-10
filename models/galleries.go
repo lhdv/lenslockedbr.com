@@ -16,6 +16,7 @@ type Gallery struct {
 	
 	UserID uint `gorm:not_null;index`
 	Title string `gorm:not_null`
+	Images []string `gorm:"-"`
 }
 
 // GalleryDB is used to interact with the galleries database.
