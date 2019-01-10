@@ -58,6 +58,8 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 
+	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+
 	//
 	// Gallery routes
 	//
@@ -89,8 +91,13 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/images",
 		requireUserMw.ApplyFn(galleriesC.ImageUpload)).
                 Methods("POST")
-
-	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+	
+	//
+	// Image routes
+	//
+	imageHandler := http.FileServer(http.Dir("./images/"))
+	r.PathPrefix("/images/").
+          Handler(http.StripPrefix("/images/", imageHandler))
 
 	log.Println("Starting the server on :3000...")
 

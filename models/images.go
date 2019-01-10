@@ -49,6 +49,13 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]string, error) {
 		return nil, err
 	}
 
+	// Adding a leading "/" to all image file paths to be easier
+	// to build <img> tag
+	for i := range strings {
+		strings[i] = "/" + strings[i]
+		strings[i] = filepath.ToSlash(strings[i])
+	}
+
 	return strings, nil
 }
 
