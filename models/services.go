@@ -5,8 +5,9 @@ import (
 )
 
 type Services struct {
-	Gallery GalleryService
 	User UserService
+	Gallery GalleryService
+	Image ImageService
 	db *gorm.DB
 }
 
@@ -21,8 +22,9 @@ func NewServices(connectionInfo string) (*Services, error) {
 	// And next we need to construct services, but we can't construct
 	// the UserService yet.
 	return &Services {
-		Gallery: NewGalleryService(db),
 		User: NewUserService(db),
+		Gallery: NewGalleryService(db),
+		Image: NewImageService(),
 		db: db,
 	}, nil
 }
