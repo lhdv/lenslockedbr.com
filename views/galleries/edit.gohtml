@@ -2,6 +2,7 @@
 <div class="row">
   <div class="col-md-10 col-md-offset-1">
     <h3>Edit your gallery</h3>
+    <a href="/galleries/{{ .ID }}">View this gallery</a>
     <hr>
   </div>
   <div class="col-md-12">
@@ -47,13 +48,20 @@
 {{ end }}
 
 {{ define "galleryImages" }}
-<ul>
-  {{ range .Images }}
-  <li>
-    <img src="{{ . }}">
-  </li>
+{{ range .ImagesSplitN 6 }}
+<div class="col-md-2">
+  {{ range . }}
+  <a href="{{ . }}">
+    <img src="{{ . }}" class="thumbnail">
+  </a>
   {{ end }}
-</ul>
+</div>
+{{ end }}
+<style>
+  .thumbnail {
+    width: 100%;
+  }
+</style>
 {{ end }}
 
 {{ define "uploadImageForm" }}
