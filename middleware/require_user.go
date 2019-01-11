@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
+
 	"lenslockedbr.com/models"
 	"lenslockedbr.com/context"
 )
@@ -37,6 +39,13 @@ type User struct {
 func (mw *User) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func (w http.ResponseWriter, 
                                       r *http.Request) {
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/assets/") ||
+                   strings.HasPrefix(path, "/images/") {
+			next(w, r)
+			return
+		}
+
 		cookie, err := r.Cookie("remember_cookie")
 		if err != nil {
 			next(w, r)
