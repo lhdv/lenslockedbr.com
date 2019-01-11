@@ -23,13 +23,12 @@ const (
 )
 
 func main() {
-	// Create a DB connection string and then use it to create
-	// our model services.
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s " +  
-                                "dbname=%s sslmode=disable",
-		                 host, port, user, password, dbname)
 
-	services, err := models.NewServices(psqlInfo)
+	cfg := DefaultConfig()
+	dbCfg := DefaultPostgresConfig()
+
+	services, err := models.NewServices(dbCfg.Dialect(),
+                                            dbCfg.ConnectionInfo())
 	if err != nil {
 		panic(err)
 	}
@@ -52,12 +51,11 @@ func main() {
 	}
 	requireUserMw := middleware.RequireUser{ }
 
-	isProd := false
 	b, err := rand.Bytes(32)
 	if err != nil {
 		panic(err)
 	}
-	csrfMw := csrf.Protect(b, csrf.Secure(isProd))
+	csrfMw := csrf.Protect(b, csrf.Secure(cfg.IsProd()))
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 
@@ -122,8 +120,9 @@ func main() {
 	assetHandler = http.StripPrefix("/assets/", assetHandler)
 	r.PathPrefix("/assets/").Handler(assetHandler)
 
-	log.Println("Starting the server on :3000...")
+	log.Printf("Starting the server on :%d...\n", cfg.Port)
 
-	http.ListenAndServe(":3000", csrfMw(userMw.Apply(r)))
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), 
+                            csrfMw(userMw.Apply(r)))
 }
 
