@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/jinzhu/gorm"
-	"log"
 )
 
 const (
@@ -17,18 +16,18 @@ type Gallery struct {
 	
 	UserID uint `gorm:not_null;index`
 	Title string `gorm:not_null`
-	Images []string `gorm:"-"`
+	Images []Image `gorm:"-"`
 }
 
-func (g *Gallery) ImagesSplitN(n int) [][]string {
+func (g *Gallery) ImagesSplitN(n int) [][]Image {
 
 	// Create our 2D slice
-	ret := make([][]string, n)
+	ret := make([][]Image, n)
 
 	// Create the inner slices - we need N of them, and we 
 	// will start them with a size of 0.
 	for i := 0; i < n; i++ {
-		ret[i] = make([]string, 0)
+		ret[i] = make([]Image, 0)
 	}
 
 	// Iterate over our images, using the index % n to determine
@@ -37,8 +36,6 @@ func (g *Gallery) ImagesSplitN(n int) [][]string {
 		bucket := i % n
 		ret[bucket] = append(ret[bucket], img)
 	}
-
-	log.Println(ret)
 
 	return ret
 }

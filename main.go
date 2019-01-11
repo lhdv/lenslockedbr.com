@@ -99,6 +99,10 @@ func main() {
 	r.PathPrefix("/images/").
           Handler(http.StripPrefix("/images/", imageHandler))
 
+	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete",
+		requireUserMw.ApplyFn(galleriesC.ImageDelete)).
+                Methods("POST")
+
 	log.Println("Starting the server on :3000...")
 
 	http.ListenAndServe(":3000", userMw.Apply(r))
