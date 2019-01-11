@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 )
 
 type PostgresConfig struct {
@@ -10,6 +13,16 @@ type PostgresConfig struct {
 	User string `json:"user"`
 	Password string `json:"password"`
 	Name string `json:"name"`
+}
+
+func DefaultPostgresConfig() PostgresConfig {
+	return PostgresConfig {
+		Host: "192.168.56.101",
+		Port: 5432,
+		User: "developer",
+		Password: "1234qwer",
+		Name: "lenslockedbr_dev",
+	}
 }
 
 func (c PostgresConfig) Dialect() string {
@@ -28,25 +41,13 @@ func (c PostgresConfig) ConnectionInfo() string {
                            c.User, c.Password, c.Name)
 }
 
-func DefaultPostgresConfig() PostgresConfig {
-	return PostgresConfig {
-		Host: "192.168.56.101",
-		Port: 5432,
-		User: "developer",
-		Password: "1234qwer",
-		Name: "lenslockedbr_dev",
-	}
-}
-
 type Config struct {
 	Port int `json:"port"`
 	Env string `json:"env"`
 	Pepper string `json:"pepper"`
 	HMACKey string `json:"hmac_key"`
-}
 
-func (c Config) IsProd() bool {
-	return c.Env == "prod"
+	Database PostgresConfig `json:"database"`
 }
 
 func DefaultConfig() Config {
@@ -55,5 +56,37 @@ func DefaultConfig() Config {
 		Env: "dev",
 		Pepper: "foobar",
 		HMACKey: "secret-hmac-key", 
+		Database: DefaultPostgresConfig(),
 	}
 }
+
+func (c Config) IsProd() bool {
+	return c.Env == "prod"
+}
+
+func LoadConfig(configReq bool) Config {
+	// Open the config file
+	f, err := os.Open(".config")
+	if err != nil {
+		if configReq {
+			panic(err)
+		}
+
+		log.Println("Using the default config...")
+		return DefaultConfig()		
+	}
+
+	var c Config
+
+	dec := json.NewDecoder(f)
+	err = dec.Decode(&c)
+	if err != nil {
+		panic(err)
+	}
+
+	log.Println("Successfully loaded .config")
+
+	return c
+}
+
+
