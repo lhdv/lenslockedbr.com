@@ -96,12 +96,19 @@ func main() {
 	// Image routes
 	//
 	imageHandler := http.FileServer(http.Dir("./images/"))
-	r.PathPrefix("/images/").
-          Handler(http.StripPrefix("/images/", imageHandler))
+	imageHandler = http.StripPrefix("/images/", imageHandler)
+	r.PathPrefix("/images/").Handler(imageHandler)
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete",
 		requireUserMw.ApplyFn(galleriesC.ImageDelete)).
                 Methods("POST")
+
+	//
+	// Assets routes
+	//
+	assetHandler := http.FileServer(http.Dir("./assets/"))
+	assetHandler = http.StripPrefix("/assets/", assetHandler)
+	r.PathPrefix("/assets/").Handler(assetHandler)
 
 	log.Println("Starting the server on :3000...")
 
