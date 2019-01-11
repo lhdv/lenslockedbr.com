@@ -8,7 +8,9 @@ import (
 	"lenslockedbr.com/controllers"
 	"lenslockedbr.com/middleware"
 	"lenslockedbr.com/models"
+	"lenslockedbr.com/rand"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 )
 
@@ -42,10 +44,20 @@ func main() {
 	galleriesC := controllers.NewGalleries(services.Gallery, 
                                                services.Image, r)
 
+	//
+	// Middleware setup
+	//
 	userMw := middleware.User {
 		UserService: services.User,
 	}
 	requireUserMw := middleware.RequireUser{ }
+
+	isProd := false
+	b, err := rand.Bytes(32)
+	if err != nil {
+		panic(err)
+	}
+	csrfMw := csrf.Protect(b, csrf.Secure(isProd))
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 
@@ -112,6 +124,6 @@ func main() {
 
 	log.Println("Starting the server on :3000...")
 
-	http.ListenAndServe(":3000", userMw.Apply(r))
+	http.ListenAndServe(":3000", csrfMw(userMw.Apply(r)))
 }
 
