@@ -14,21 +14,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	host     = "192.168.56.101"
-	port     = 5432
-	user     = "developer"
-	password = "1234qwer"
-	dbname   = "lenslockedbr_dev"
-)
-
 func main() {
 
 	cfg := DefaultConfig()
 	dbCfg := DefaultPostgresConfig()
 
-	services, err := models.NewServices(dbCfg.Dialect(),
-                                            dbCfg.ConnectionInfo())
+	services, err := models.NewServices(
+		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
+		models.WithLogMode(!cfg.IsProd()),
+		models.WithUser(cfg.Pepper, cfg.HMACKey),
+		models.WithGallery(),
+		models.WithImage(),)
 	if err != nil {
 		panic(err)
 	}

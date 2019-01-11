@@ -12,8 +12,6 @@ import (
 	"lenslockedbr.com/hash"
 )
 
-const hmacSecretKey = "secret-hmac-key"
-
 var (
 	// ErrNotFound is returned when a resource cannot be found
 	// in database.
@@ -59,10 +57,6 @@ var (
 	// at least 32 bytes
 	ErrRememberTooShort modelError = "models: remember token must " +
                             " be at least 32 bytes"
-
-
-	// Default user pepper for password
-	userPwPepper = "foobar"
 
 	_ UserDB = &userGorm{}
 	_ UserService = &userService{}
@@ -131,6 +125,7 @@ type UserService interface {
 
 type userService struct {
 	UserDB
+	pepper string
 }
 
 // userValidator is our validation layer that validates and normalizes
@@ -138,6 +133,7 @@ type userService struct {
 type userValidator struct {
 	UserDB
 	hmac hash.HMAC
+	pepper string
 	emailRegex *regexp.Regexp
 }
 
@@ -176,11 +172,11 @@ func (e modelError) Public() string {
 // need to return a pointer here. Don't forget to update this first 
 // line - we removed the * character at the end where we write
 // (UserService, error)
-func NewUserService(db *gorm.DB) UserService {
+func NewUserService(db *gorm.DB, pepper, hmacKey string) UserService {
 
 	u := &userGorm{db}
-	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := newUserValidator(u, hmac) 
+	hmac := hash.NewHMAC(hmacKey)
+	uv := newUserValidator(u, hmac, pepper) 
 
 	// We also need to update how we construct the user service.
 	// We no longer have a UserService type to construct, and 
@@ -190,13 +186,15 @@ func NewUserService(db *gorm.DB) UserService {
 	//   func (us *userService) <- this uses a pointer
 	return &userService{
 		UserDB: uv,
+		pepper: pepper,
 	}
 }
 
-func newUserValidator(udb UserDB, hmac hash.HMAC) *userValidator {
+func newUserValidator(udb UserDB, hmac hash.HMAC, pepper string) *userValidator {
 	return &userValidator {
 		UserDB: udb,
 		hmac: hmac,
+		pepper: pepper,
 		emailRegex: regexp.MustCompile(
                            `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
 	}
@@ -294,7 +292,7 @@ func (u *userService) Authenticate(email, password string) (*User, error) {
 
 	err = bcrypt.CompareHashAndPassword(
 			[]byte(foundUser.PasswordHash),
-			[]byte(password+userPwPepper))
+			[]byte(password+u.pepper))
 
 	switch err {
 	case nil:
@@ -316,7 +314,7 @@ func (u *userValidator) bcryptPassword(user *User) error {
 		return nil
 	}
 	
-	pwBytes := []byte(user.Password + userPwPepper)
+	pwBytes := []byte(user.Password + u.pepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
 						bcrypt.DefaultCost)
 	if err != nil {
