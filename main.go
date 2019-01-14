@@ -24,7 +24,7 @@ func main() {
 	flag.Parse()
 
 	cfg := LoadConfig(*boolPtr)
-	dbCfg := DefaultPostgresConfig()
+	dbCfg := cfg.Database
 
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
