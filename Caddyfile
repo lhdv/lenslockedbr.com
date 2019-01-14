@@ -1,0 +1,6 @@
+www.leandr0.net {
+  gzip
+  proxy / localhost:3000 {
+    transparent
+  }
+}
