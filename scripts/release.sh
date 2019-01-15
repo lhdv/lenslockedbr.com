@@ -5,7 +5,7 @@ cd "$GOPATH/src/lenslockedbr.com"
 
 echo "===== Releasing lenslockedbr.com ====="
 echo "  Deleting the local binary if it exists (so it isn't uploaded)..."
-rm lenslockedbr.com.exe
+rm *.exe
 echo "  Done!"
 
 sleep 2
@@ -13,67 +13,69 @@ sleep 2
 echo "  Packing the code"
 cd "$GOPATH/src/"
 rm lenslockedbr.com.tar.gz
-tar -cvzf lenslockedbr.com.tar.gz --exclude='lenslockedbr.com/.git/*' --exclude='lenslockedbr.com/images/*' lenslockedbr.com\
+tar -cvzf lenslockedbr.com.tar.gz --exclude='lenslockedbr.com/.git/*' --exclude='lenslockedbr.com/images/*' --exclude='lenslockedbr.com/*.exe' lenslockedbr.com\
 
 sleep 2
 
 echo "  Deleting existing code..."
-ssh root@157.230.137.192 "rm -rf /root/go/src/lenslockedbr.com"
+ssh root@leandr0.net -p 2233 " rm -rf /root/go/src/lenslockedbr.com"
 echo "  Code deleted successfully!"
 
 sleep 2
 
 echo "  Uploading and extract code..."
 cd "$GOPATH/src/"
-scp lenslockedbr.com.tar.gz  root@157.230.137.192:/root/go/src/
-ssh root@157.230.137.192 "tar -zxvf /root/go/src/lenslockedbr.com.tar.gz -C /root/go/src/"
+scp -P 2233 lenslockedbr.com.tar.gz root@leandr0.net:/root/go/src/
+ssh root@leandr0.net -p 2233 " tar -zxvf /root/go/src/lenslockedbr.com.tar.gz -C /root/go/src/"
 #echo "  Code uploaded successfully!"
 
 sleep 2
 
 echo "  Go getting deps..."
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get golang.org/x/crypto/bcrypt"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get golang.org/x/crypto/bcrypt"
 
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/mux"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/mux"
 
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/schema"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/schema"
 
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/csrf"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/gorilla/csrf"
 
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/lib/pq"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/lib/pq"
 
-ssh root@157.230.137.192 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/jinzhu/gorm"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/jinzhu/gorm"
+
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get gopkg.in/mailgun/mailgun-go.v1"
 
 sleep 2
 
 echo "  Building the code on remote server..."
-ssh root@157.230.137.192 "export GOPATH=/root/go; cd /root/app; /usr/local/go/bin/go build -o ./server /root/go/src/lenslockedbr.com/*.go"
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go;  cd /root/app;  /usr/local/go/bin/go build -o ./server /root/go/src/lenslockedbr.com/*.go"
 echo "  Code built successfully!..."
 
 sleep 2
 
 echo "  Moving assets..."
-ssh root@157.230.137.192 "cd /root/app; cp -R /root/go/src/lenslockedbr.com/assets ."
+ssh root@leandr0.net -p 2233 " cd /root/app;  cp -R /root/go/src/lenslockedbr.com/assets ."
 echo "  Assets moved successfully!..."
 
 echo "  Moving views..."
-ssh root@157.230.137.192 "cd /root/app; cp -R /root/go/src/lenslockedbr.com/views ."
+ssh root@leandr0.net -p 2233 " cd /root/app;  cp -R /root/go/src/lenslockedbr.com/views ."
 echo "  Views moved successfully!..."
 
 echo "  Moving Caddyfile..."
-ssh root@157.230.137.192 "cd /root/app; cp /root/go/src/lenslockedbr.com/Caddyfile ."
+ssh root@leandr0.net -p 2233 " cd /root/app;  cp /root/go/src/lenslockedbr.com/Caddyfile ."
 echo "  Caddyfile moved successfully!..."
 
 sleep 2
 
 echo "  Restarting the server..."
-ssh root@157.230.137.192 "service leandr0.net restart"
+ssh root@leandr0.net -p 2233 " service leandr0.net restart"
 echo "  Server restarted successfully!..."
 
 sleep 2
 
 echo "  Restarting Caddy server..."
-ssh root@157.230.137.192 "service caddy restart"
+ssh root@leandr0.net -p 2233 " service caddy restart"
 echo "  Caddy restarted successfully!..."
 
 echo "===== Done releasing lenslockedbr.com ====="
