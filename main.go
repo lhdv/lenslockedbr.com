@@ -66,10 +66,16 @@ func main() {
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
 
+	//
+	// User routes
+	//
+
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
+	r.Handle("/logout", 
+		requireUserMw.ApplyFn(usersC.Logout)).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
 
