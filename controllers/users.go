@@ -131,7 +131,12 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/galleries", http.StatusFound)
+	alert := views.Alert {
+		Level: views.AlertLvlSuccess,
+		Message: "Welcome back " + user.Name,
+	}
+
+	views.RedirectAlert(w, r, "/galleries", http.StatusFound, alert)
 }
 
 // CookieTest is used to display cookies set on the current user
@@ -173,7 +178,12 @@ func (u *Users) Logout(w http.ResponseWriter, r *http.Request) {
 	user.Remember = token
 	u.service.Update(user)
 	// Finally send the user to the home page
-	http.Redirect(w, r, "/", http.StatusFound)
+	alert := views.Alert {
+		Level: views.AlertLvlSuccess,
+		Message: "Successfully logged out!",
+	}
+
+	views.RedirectAlert(w, r, "/galleries", http.StatusFound, alert)
 }
 
 /////////////////////////////////////////////////////////////////////
