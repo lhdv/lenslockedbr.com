@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"lenslockedbr.com/context"
+	"lenslockedbr.com/email"
 	"lenslockedbr.com/models"
 	"lenslockedbr.com/rand"
 	"lenslockedbr.com/views"
@@ -27,9 +28,10 @@ type Users struct {
 	NewView *views.View
 	LoginView *views.View
 	service models.UserService
+	emailer *email.Client
 }
 
-func NewUsers(us models.UserService) *Users {
+func NewUsers(us models.UserService, emailer *email.Client) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", false,
 			               "users/new"),
@@ -37,6 +39,7 @@ func NewUsers(us models.UserService) *Users {
 		LoginView: views.NewView("bootstrap", false,
 			                 "users/login"),
 		service: us,
+		emailer: emailer,
 	}
 }
 

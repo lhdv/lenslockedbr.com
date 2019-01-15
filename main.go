@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"lenslockedbr.com/controllers"
+	"lenslockedbr.com/email"
 	"lenslockedbr.com/middleware"
 	"lenslockedbr.com/models"
 	"lenslockedbr.com/rand"
@@ -39,10 +40,17 @@ func main() {
 	defer services.Close()
 	services.AutoMigrate()
 
+	mgCfg := cfg.Mailgun
+	emailer := email.NewClient(email.WithMailgun(mgCfg.Domain,
+                                                     mgCfg.APIKey,
+                                                     mgCfg.PublicAPIKey),
+                                   email.WithSender("LensLockedBR Team",
+                                                    "we@"+mgCfg.Domain))
+
 	r := mux.NewRouter()
 
 	staticC := controllers.NewStatic()
-	usersC := controllers.NewUsers(services.User)
+	usersC := controllers.NewUsers(services.User, emailer)
 	galleriesC := controllers.NewGalleries(services.Gallery, 
                                                services.Image, r)
 
