@@ -1,4 +1,4 @@
-{{define "yield"}}
+{{ define "yield" }}
 <div class="row">
   <div class="col-md-4 col-md-offset-4">
     <div class="panel panel-primary">
@@ -6,27 +6,27 @@
         <h3 class="panel-title">Sign Up Now!</h3>
       </div>
       <div class="panel-body">
-        {{template "signupForm"}}
+        {{ template "signupForm" . }}
       </div>
     </div>
   </div>
 </div>
-{{end}}
+{{ end }}
 
-{{define "signupForm"}}
+{{ define "signupForm" }}
 <form action="/signup" method="POST">
   {{ csrfField }}
   <div class="form-group">
     <label for="name">Name</label>
-    <input type="text" name="name" class="form-control" id="name" placeholder="Your full name">
+    <input type="text" name="name" class="form-control" id="name" placeholder="Your full name" value="{{ .Name }}">
   </div>
   <div class="form-group">
     <label for="age">Age</label>
-    <input type="text" name="age" class="form-control" id="age" placeholder="Your age">
+    <input type="text" name="age" class="form-control" id="age" placeholder="Your age" value="{{ .Age }}">
   </div>
   <div class="form-group">
     <label for="email">Email address</label>
-    <input type="email" name="email" class="form-control" id="email" placeholder="Email">
+    <input type="email" name="email" class="form-control" id="email" placeholder="Email" value="{{ .Email }}">
   </div>
   <div class="form-group">
     <label for="password">Password</label>
@@ -34,4 +34,4 @@
   </div>
   <button type="submit" class="btn btn-primary">Sign Up</button>
 </form>
-{{end}}
+{{ end }}
