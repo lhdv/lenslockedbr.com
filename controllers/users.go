@@ -24,7 +24,7 @@ type LoginForm struct {
 	Password string `schema:"password"`
 }
 
-type ResetPwForm structu {
+type ResetPwForm struct {
 	Email string `schema:"email"`
 	Token string `schema:"token"`
 	Password string `schema:"password"`
@@ -46,9 +46,9 @@ func NewUsers(us models.UserService, emailer *email.Client) *Users {
 
 		LoginView: views.NewView("bootstrap", false,
 			                 "users/login"),
-		ForgotView: views.NewView("bootstrap", false,
+		ForgotPwView: views.NewView("bootstrap", false,
 			                  "users/forgot_pw"),
-		ResetView: views.NewView("bootstrap", false,
+		ResetPwView: views.NewView("bootstrap", false,
 			                 "users/reset_pw"),
 		service: us,
 		emailer: emailer,
@@ -211,8 +211,12 @@ func (u *Users) InitiateReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: email the user
-	_ = token
+	err = u.emailer.ResetPw(form.Email, token)
+	if err != nil {
+		vd.SetAlert(err)
+		u.ForgotPwView.Render(w, r, vd)
+		return
+	}
 
 	v := views.Alert {
 		Level: views.AlertLvlSuccess,
