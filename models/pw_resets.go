@@ -4,7 +4,7 @@ import (
 	"lenslockedbr.com/hash"
 	"lenslockedbr.com/rand"
 
-	"github.com/jinzh/gorm"
+	"github.com/jinzhu/gorm"
 )
 
 /////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ func (pwrg *pwResetGorm) ByToken(token string) (*pwReset, error) {
 
 	var pwr pwReset
 
-	err := first(pwrg.db.Where("token_hash = ?", tokenHash), &pwr)
+	err := first(pwrg.db.Where("token_hash = ?", token), &pwr)
 	if err != nil {
 		return nil, err
 	}
@@ -136,11 +136,11 @@ func (pwrv *pwResetValidator) ByToken(token string) (*pwReset, error) {
 
 func (pwrv *pwResetValidator) Create(pwr *pwReset) error {
 
-	err := runPwResetValFns(&pwr, pwrv.requireUserID,
+	err := runPwResetValFns(pwr, pwrv.requireUserID,
                                       pwrv.setTokenIfUnset,
                                       pwrv.hmacToken)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	return pwrv.pwResetDB.Create(pwr)

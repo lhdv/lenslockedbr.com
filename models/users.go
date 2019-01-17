@@ -3,6 +3,7 @@ package models
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -57,6 +58,8 @@ var (
 	// at least 32 bytes
 	ErrRememberTooShort modelError = "models: remember token must " +
                             " be at least 32 bytes"
+
+	ErrTokenInvalid modelError = "models: token provided is not valid"
 
 	_ UserDB = &userGorm{}
 	_ UserService = &userService{}
@@ -121,11 +124,25 @@ type UserService interface {
 	// ErrNotFound, ErrPasswordIncorrect, or another error 
 	// if something goes wrong.
 	Authenticate(email, password string) (*User, error)
+
+	// InitiateReset will complete all the model-related taks to
+	// start the password reset process for the user with the
+	// provided email address. Once completed, it will return the
+	// token, or an error if there was one.
+	InitiateReset(email string) (string, error)
+
+	// CompleteReset will complete all the model-related tasks to
+	// complete the password reset process for the user that the
+	// token matches, including updating that user's pw.
+	// If the token has expired, or if it is invalid for any other
+	// reason the ErrTokenInvalid error will be returned.
+	CompleteReset(token, newPw string) (*User, error)
 }
 
 type userService struct {
 	UserDB
 	pepper string
+	pwResetDB pwResetDB
 }
 
 // userValidator is our validation layer that validates and normalizes
@@ -187,6 +204,7 @@ func NewUserService(db *gorm.DB, pepper, hmacKey string) UserService {
 	return &userService{
 		UserDB: uv,
 		pepper: pepper,
+		pwResetDB: newPwResetValidator(&pwResetGorm{db}, hmac),
 	}
 }
 
@@ -302,6 +320,53 @@ func (u *userService) Authenticate(email, password string) (*User, error) {
 	default:
 		return nil, err
 	}
+}
+
+func (u *userService) InitiateReset(email string) (string, error) {
+
+	user, err := u.ByEmail(email)
+	if err != nil {
+		return "", err
+	}
+
+	pwr := pwReset {
+		UserID: user.ID,
+	}
+	if err := u.pwResetDB.Create(&pwr); err != nil {
+		return "", err
+	}
+
+	return pwr.Token, nil
+}
+
+func (u *userService) CompleteReset(token, newPw string) (*User, error) {
+
+	pwr, err := u.pwResetDB.ByToken(token)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil, ErrTokenInvalid
+		}
+		return nil, err
+	}
+
+	if time.Now().Sub(pwr.CreatedAt) > (12 * time.Hour) {
+		return nil, ErrTokenInvalid
+	}
+
+	user, err := u.ByID(pwr.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = newPw
+	err = u.Update(user)
+	if err != nil {
+		return nil, err
+	}
+		
+	u.pwResetDB.Delete(pwr.ID)
+
+	return user, nil
 }
 
 // bcryptPassword will hash a user's password with an app-wide pepper
