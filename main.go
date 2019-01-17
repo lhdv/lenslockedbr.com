@@ -86,6 +86,10 @@ func main() {
 		requireUserMw.ApplyFn(usersC.Logout)).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+	r.Handle("/forgot", usersC.ForgotView).Methods("GET")
+	r.HandleFunc("/forgot", usersC.InitiateReset).Methods("POST")
+	r.Handle("/reset", usersC.ResettView).Methods("GET")
+	r.HandleFunc("/reset", usersC.CompleteReset).Methods("POST")
 
 	//
 	// Gallery routes

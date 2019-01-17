@@ -24,9 +24,17 @@ type LoginForm struct {
 	Password string `schema:"password"`
 }
 
+type ResetPwForm structu {
+	Email string `schema:"email"`
+	Token string `schema:"token"`
+	Password string `schema:"password"`
+}
+
 type Users struct {
 	NewView *views.View
 	LoginView *views.View
+	ForgotPwView *views.View
+	ResetPwView *views.View
 	service models.UserService
 	emailer *email.Client
 }
@@ -38,6 +46,10 @@ func NewUsers(us models.UserService, emailer *email.Client) *Users {
 
 		LoginView: views.NewView("bootstrap", false,
 			                 "users/login"),
+		ForgotView: views.NewView("bootstrap", false,
+			                  "users/forgot_pw"),
+		ResetView: views.NewView("bootstrap", false,
+			                 "users/reset_pw"),
 		service: us,
 		emailer: emailer,
 	}
@@ -149,23 +161,6 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	views.RedirectAlert(w, r, "/galleries", http.StatusFound, alert)
 }
 
-// CookieTest is used to display cookies set on the current user
-func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("remember_cookie")
-	if err != nil {
-		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	user, err := u.service.ByRemember(cookie.Value)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintln(w, "User found is:", user)
-}
-
 // Logout is used to delete a user's session cookie and invalidate
 // theis current remember token, which will sign the current user out.
 func (u *Users) Logout(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +189,102 @@ func (u *Users) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	views.RedirectAlert(w, r, "/galleries", http.StatusFound, alert)
+}
+
+// POST /forgot
+func (u *Users) InitiateReset(w http.ResponseWriter, r *http.Request) {
+
+	var vd views.Data
+	var form ResetPwForm
+
+	vd.Yield = &form
+	if err := parseForm(r, &form); err != nil {
+		vd.SetAlert(err)
+		u.ForgotPwView.Render(w, r, vd)
+		return
+	}
+
+	token, err := u.service.InitiateReset(form.Email)
+	if err != nil {
+		vd.SetAlert(err)
+		u.ForgotPwView.Render(w, r, vd)
+		return
+	}
+
+	// TODO: email the user
+	_ = token
+
+	v := views.Alert {
+		Level: views.AlertLvlSuccess,
+		Message: "Instructions for reseting your password have " +
+			 "been emailed to you.",
+	}
+	views.RedirectAlert(w, r, "/reset", http.StatusFound, v)
+}
+
+// ResetPw display the reset password form and has a method so that we
+// can prefill the form data with a token provided via the URL query
+// params.
+//
+// GET /reset
+func (u *Users) ResetPw(w http.ResponseWriter, r *http.Request) {
+
+	var vd views.Data
+	var form ResetPwForm
+
+	vd.Yield = &form
+	if err := parseURLParams(r, &form); err != nil {
+		vd.SetAlert(err)
+	}
+
+	u.ResetPwView.Render(w, r, vd)
+}
+
+// POST /reset
+func (u *Users) CompleteReset(w http.ResponseWriter, r *http.Request) {
+
+	var vd views.Data
+	var form ResetPwForm
+
+	vd.Yield = &form
+	if err := parseForm(r, &form); err != nil {
+		vd.SetAlert(err)
+		u.ResetPwView.Render(w, r, vd)
+		return
+	}
+
+	user, err := u.service.CompleteReset(form.Token, form.Password)
+	if err != nil {
+		vd.SetAlert(err)
+		u.ResetPwView.Render(w, r, vd)
+		return
+	}
+
+	u.signIn(w, user)
+
+	v := views.Alert {
+		Level: views.AlertLvlSuccess,
+		Message: "Your password has been reset and you have " +
+			 "been logged in!",
+	}
+	views.RedirectAlert(w, r, "/galleries", http.StatusFound, v)
+}
+
+// CookieTest is used to display cookies set on the current user
+func (u *Users) CookieTest(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("remember_cookie")
+	if err != nil {
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
+
+	user, err := u.service.ByRemember(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintln(w, "User found is:", user)
 }
 
 /////////////////////////////////////////////////////////////////////
