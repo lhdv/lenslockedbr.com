@@ -15,8 +15,8 @@ import (
 
 type pwReset struct {
 	gorm.Model
-	UserID uint `gorm:"not null"`
-	Token string `gorm:"-"`
+	UserID    uint   `gorm:"not null"`
+	Token     string `gorm:"-"`
 	TokenHash string `gorm:"not null;unique_index"`
 }
 
@@ -48,8 +48,8 @@ func (pwrg *pwResetGorm) Create(pwr *pwReset) error {
 
 func (pwrg *pwResetGorm) Delete(id uint) error {
 
-	pwr := pwReset {
-		Model: gorm.Model {ID: id},
+	pwr := pwReset{
+		Model: gorm.Model{ID: id},
 	}
 
 	return pwrg.db.Delete(&pwr).Error
@@ -80,9 +80,9 @@ type pwResetValidator struct {
 }
 
 func newPwResetValidator(db pwResetDB, hmac hash.HMAC) *pwResetValidator {
-	return &pwResetValidator {
+	return &pwResetValidator{
 		pwResetDB: db,
-		hmac: hmac,
+		hmac:      hmac,
 	}
 }
 
@@ -112,10 +112,10 @@ func (pwrv *pwResetValidator) setTokenIfUnset(pwr *pwReset) error {
 }
 
 func (pwrv *pwResetValidator) hmacToken(pwr *pwReset) error {
-	
+
 	if pwr.Token == "" {
 		return nil
-	}	
+	}
 
 	pwr.TokenHash = pwrv.hmac.Hash(pwr.Token)
 
@@ -125,7 +125,7 @@ func (pwrv *pwResetValidator) hmacToken(pwr *pwReset) error {
 func (pwrv *pwResetValidator) ByToken(token string) (*pwReset, error) {
 
 	pwr := pwReset{Token: token}
-	
+
 	err := runPwResetValFns(&pwr, pwrv.hmacToken)
 	if err != nil {
 		return nil, err
@@ -137,8 +137,8 @@ func (pwrv *pwResetValidator) ByToken(token string) (*pwReset, error) {
 func (pwrv *pwResetValidator) Create(pwr *pwReset) error {
 
 	err := runPwResetValFns(pwr, pwrv.requireUserID,
-                                      pwrv.setTokenIfUnset,
-                                      pwrv.hmacToken)
+		pwrv.setTokenIfUnset,
+		pwrv.hmacToken)
 	if err != nil {
 		return err
 	}
@@ -154,6 +154,3 @@ func (pwrv *pwResetValidator) Delete(id uint) error {
 
 	return pwrv.pwResetDB.Delete(id)
 }
-
-
-

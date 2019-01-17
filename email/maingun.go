@@ -9,8 +9,8 @@ import (
 
 const (
 	welcomeSubject = "Welcome to LensLockedBR.com!"
-	resetSubject = "Instructions for reseting your password."
-	resetBaseURL = "https://www.leandr0.net/reset"
+	resetSubject   = "Instructions for reseting your password."
+	resetBaseURL   = "https://www.leandr0.net/reset"
 )
 
 //
@@ -77,13 +77,13 @@ LensLockedBR Support<br/>
 
 type Client struct {
 	from string
-	mg mailgun.Mailgun
+	mg   mailgun.Mailgun
 }
 
 func (c *Client) Welcome(toName, toEmail string) error {
-	message := mailgun.NewMessage(c.from, welcomeSubject, 
-                                      welcomeText,
-                                      buildEmail(toName, toEmail))
+	message := mailgun.NewMessage(c.from, welcomeSubject,
+		welcomeText,
+		buildEmail(toName, toEmail))
 	message.SetHtml(welcomeHTML)
 
 	_, _, err := c.mg.Send(message)
@@ -91,15 +91,15 @@ func (c *Client) Welcome(toName, toEmail string) error {
 }
 
 func (c *Client) ResetPw(toEmail, token string) error {
-	
+
 	v := url.Values{}
 	v.Set("token", token)
 
 	resetUrl := resetBaseURL + "?" + v.Encode()
 
 	resetText := fmt.Sprintf(resetTextTmpl, resetUrl, token)
-	message := mailgun.NewMessage(c.from, resetSubject, resetText, 
-                                      toEmail)
+	message := mailgun.NewMessage(c.from, resetSubject, resetText,
+		toEmail)
 
 	resetHTML := fmt.Sprintf(resetHTMLTmpl, resetUrl, resetUrl, token)
 	message.SetHtml(resetHTML)
@@ -111,7 +111,7 @@ func (c *Client) ResetPw(toEmail, token string) error {
 type ClientConfig func(*Client)
 
 func NewClient(opts ...ClientConfig) *Client {
-	client := Client {
+	client := Client{
 		from: "support@lenslockedbr.com",
 	}
 
@@ -148,5 +148,3 @@ func buildEmail(name, email string) string {
 
 	return fmt.Sprintf("%s <%s>", name, email)
 }
-
-

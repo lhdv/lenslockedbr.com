@@ -20,36 +20,36 @@ type SignupForm struct {
 }
 
 type LoginForm struct {
-	Email string `schema:"email"`
+	Email    string `schema:"email"`
 	Password string `schema:"password"`
 }
 
 type ResetPwForm struct {
-	Email string `schema:"email"`
-	Token string `schema:"token"`
+	Email    string `schema:"email"`
+	Token    string `schema:"token"`
 	Password string `schema:"password"`
 }
 
 type Users struct {
-	NewView *views.View
-	LoginView *views.View
+	NewView      *views.View
+	LoginView    *views.View
 	ForgotPwView *views.View
-	ResetPwView *views.View
-	service models.UserService
-	emailer *email.Client
+	ResetPwView  *views.View
+	service      models.UserService
+	emailer      *email.Client
 }
 
 func NewUsers(us models.UserService, emailer *email.Client) *Users {
 	return &Users{
 		NewView: views.NewView("bootstrap", false,
-			               "users/new"),
+			"users/new"),
 
 		LoginView: views.NewView("bootstrap", false,
-			                 "users/login"),
+			"users/login"),
 		ForgotPwView: views.NewView("bootstrap", false,
-			                  "users/forgot_pw"),
+			"users/forgot_pw"),
 		ResetPwView: views.NewView("bootstrap", false,
-			                 "users/reset_pw"),
+			"users/reset_pw"),
 		service: us,
 		emailer: emailer,
 	}
@@ -79,7 +79,7 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
 	var form SignupForm
-	
+
 	vd.Yield = &form
 
 	if err := parseForm(r, &form); err != nil {
@@ -107,8 +107,8 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	alert := views.Alert {
-		Level: views.AlertLvlSuccess,
+	alert := views.Alert{
+		Level:   views.AlertLvlSuccess,
 		Message: "Welcome to LensLockedBR.com!",
 	}
 
@@ -132,13 +132,13 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := u.service.Authenticate(form.Email,
-                                            form.Password)
+		form.Password)
 	if err != nil {
 
 		switch err {
 		case models.ErrNotFound:
 			vd.AlertError("No user exists with that " +
-                                         "email address")
+				"email address")
 		default:
 			vd.SetAlert(err)
 		}
@@ -153,8 +153,8 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	alert := views.Alert {
-		Level: views.AlertLvlSuccess,
+	alert := views.Alert{
+		Level:   views.AlertLvlSuccess,
 		Message: "Welcome back " + user.Name,
 	}
 
@@ -165,10 +165,10 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 // theis current remember token, which will sign the current user out.
 func (u *Users) Logout(w http.ResponseWriter, r *http.Request) {
 	// First expire the user's cookie
-	cookie := http.Cookie {
-		Name: "remember_token",
-		Value: "",
-		Expires: time.Now(),
+	cookie := http.Cookie{
+		Name:     "remember_token",
+		Value:    "",
+		Expires:  time.Now(),
 		HttpOnly: true,
 	}
 
@@ -183,8 +183,8 @@ func (u *Users) Logout(w http.ResponseWriter, r *http.Request) {
 	user.Remember = token
 	u.service.Update(user)
 	// Finally send the user to the home page
-	alert := views.Alert {
-		Level: views.AlertLvlSuccess,
+	alert := views.Alert{
+		Level:   views.AlertLvlSuccess,
 		Message: "Successfully logged out!",
 	}
 
@@ -218,10 +218,10 @@ func (u *Users) InitiateReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v := views.Alert {
+	v := views.Alert{
 		Level: views.AlertLvlSuccess,
 		Message: "Instructions for reseting your password have " +
-			 "been emailed to you.",
+			"been emailed to you.",
 	}
 	views.RedirectAlert(w, r, "/reset", http.StatusFound, v)
 }
@@ -266,10 +266,10 @@ func (u *Users) CompleteReset(w http.ResponseWriter, r *http.Request) {
 
 	u.signIn(w, user)
 
-	v := views.Alert {
+	v := views.Alert{
 		Level: views.AlertLvlSuccess,
 		Message: "Your password has been reset and you have " +
-			 "been logged in!",
+			"been logged in!",
 	}
 	views.RedirectAlert(w, r, "/galleries", http.StatusFound, v)
 }
@@ -318,9 +318,9 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 	}
 
 	// Set a cookie with remember token from user
-	cookie := http.Cookie {
-		Name: "remember_cookie",
-		Value: user.Remember,
+	cookie := http.Cookie{
+		Name:     "remember_cookie",
+		Value:    user.Remember,
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)

@@ -18,10 +18,10 @@ import (
 
 func main() {
 
-	boolPtr := flag.Bool("prod", false, "Provide this flag in " +
-				"production. This ensures that a " +
-				".config file is provided before the " +
-				"application starts.")
+	boolPtr := flag.Bool("prod", false, "Provide this flag in "+
+		"production. This ensures that a "+
+		".config file is provided before the "+
+		"application starts.")
 	flag.Parse()
 
 	cfg := LoadConfig(*boolPtr)
@@ -32,7 +32,7 @@ func main() {
 		models.WithLogMode(!cfg.IsProd()),
 		models.WithUser(cfg.Pepper, cfg.HMACKey),
 		models.WithGallery(),
-		models.WithImage(),)
+		models.WithImage())
 	if err != nil {
 		panic(err)
 	}
@@ -42,25 +42,25 @@ func main() {
 
 	mgCfg := cfg.Mailgun
 	emailer := email.NewClient(email.WithMailgun(mgCfg.Domain,
-                                                     mgCfg.APIKey,
-                                                     mgCfg.PublicAPIKey),
-                                   email.WithSender("LensLockedBR Team",
-                                                    "we@"+mgCfg.Domain))
+		mgCfg.APIKey,
+		mgCfg.PublicAPIKey),
+		email.WithSender("LensLockedBR Team",
+			"we@"+mgCfg.Domain))
 
 	r := mux.NewRouter()
 
 	staticC := controllers.NewStatic()
 	usersC := controllers.NewUsers(services.User, emailer)
-	galleriesC := controllers.NewGalleries(services.Gallery, 
-                                               services.Image, r)
+	galleriesC := controllers.NewGalleries(services.Gallery,
+		services.Image, r)
 
 	//
 	// Middleware setup
 	//
-	userMw := middleware.User {
+	userMw := middleware.User{
 		UserService: services.User,
 	}
-	requireUserMw := middleware.RequireUser{ }
+	requireUserMw := middleware.RequireUser{}
 
 	b, err := rand.Bytes(32)
 	if err != nil {
@@ -82,7 +82,7 @@ func main() {
 	r.HandleFunc("/signup", usersC.Create).Methods("POST")
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
-	r.Handle("/logout", 
+	r.Handle("/logout",
 		requireUserMw.ApplyFn(usersC.Logout)).Methods("POST")
 
 	r.Handle("/forgot", usersC.ForgotPwView).Methods("GET")
@@ -95,19 +95,19 @@ func main() {
 	// Gallery routes
 	//
 
-	r.Handle("/galleries", 
+	r.Handle("/galleries",
 		requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET").
 		Name(controllers.IndexGallery)
 
-	r.Handle("/galleries/new", 
+	r.Handle("/galleries/new",
 		requireUserMw.Apply(galleriesC.NewView)).Methods("GET")
 
-	r.HandleFunc("/galleries/{id:[0-9]+}", 
+	r.HandleFunc("/galleries/{id:[0-9]+}",
 		galleriesC.Show).Methods("GET").
-                Name(controllers.ShowGallery)
+		Name(controllers.ShowGallery)
 
-	r.HandleFunc("/galleries", 
-                 requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
+	r.HandleFunc("/galleries",
+		requireUserMw.ApplyFn(galleriesC.Create)).Methods("POST")
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/edit",
 		requireUserMw.ApplyFn(galleriesC.Edit)).Methods("GET").
@@ -121,8 +121,8 @@ func main() {
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/images",
 		requireUserMw.ApplyFn(galleriesC.ImageUpload)).
-                Methods("POST")
-	
+		Methods("POST")
+
 	//
 	// Image routes
 	//
@@ -132,7 +132,7 @@ func main() {
 
 	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete",
 		requireUserMw.ApplyFn(galleriesC.ImageDelete)).
-                Methods("POST")
+		Methods("POST")
 
 	//
 	// Assets routes
@@ -143,7 +143,6 @@ func main() {
 
 	log.Printf("Starting the server on :%d...\n", cfg.Port)
 
-	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), 
-                            csrfMw(userMw.Apply(r)))
+	http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port),
+		csrfMw(userMw.Apply(r)))
 }
-

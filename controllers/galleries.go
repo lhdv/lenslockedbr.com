@@ -14,8 +14,8 @@ import (
 
 const (
 	IndexGallery = "index_galleries"
-	ShowGallery = "show_gallery"
-	EditGallery = "edit_gallery"
+	ShowGallery  = "show_gallery"
+	EditGallery  = "edit_gallery"
 
 	maxMultipartMem = 1 << 20 // 1 megabyte
 )
@@ -25,29 +25,29 @@ type GalleryForm struct {
 }
 
 type Galleries struct {
-	NewView *views.View
-	ShowView *views.View
-	EditView *views.View
+	NewView   *views.View
+	ShowView  *views.View
+	EditView  *views.View
 	IndexView *views.View
-        gs models.GalleryService
-        is models.ImageService
-	r *mux.Router
+	gs        models.GalleryService
+	is        models.ImageService
+	r         *mux.Router
 }
 
 func NewGalleries(gs models.GalleryService, is models.ImageService,
-                  r *mux.Router) *Galleries {
-	return &Galleries {
-		NewView: views.NewView("bootstrap", false, 
-                                       "galleries/new"),
-		ShowView: views.NewView("bootstrap", false, 
-                                       "galleries/show"),
-                EditView: views.NewView("bootstrap", false,
-                                       "galleries/edit"),
-                IndexView: views.NewView("bootstrap", false,
-                                       "galleries/index"),
+	r *mux.Router) *Galleries {
+	return &Galleries{
+		NewView: views.NewView("bootstrap", false,
+			"galleries/new"),
+		ShowView: views.NewView("bootstrap", false,
+			"galleries/show"),
+		EditView: views.NewView("bootstrap", false,
+			"galleries/edit"),
+		IndexView: views.NewView("bootstrap", false,
+			"galleries/index"),
 		gs: gs,
 		is: is,
-		r: r,
+		r:  r,
 	}
 }
 
@@ -67,8 +67,8 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 
 	user := context.User(r.Context())
 
-	gallery := models.Gallery {
-		Title: form.Title,
+	gallery := models.Gallery{
+		Title:  form.Title,
 		UserID: user.ID,
 	}
 
@@ -107,9 +107,9 @@ func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 
 	user := context.User(r.Context())
 	if gallery.UserID != user.ID {
-		http.Error(w, "You do not have permission to edit " +
-                              "this gallery.",
-                              http.StatusForbidden)
+		http.Error(w, "You do not have permission to edit "+
+			"this gallery.",
+			http.StatusForbidden)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 	user := context.User(r.Context())
 	if gallery.UserID != user.ID {
 		http.Error(w, "Gallery not found.",
-                              http.StatusForbidden)
+			http.StatusForbidden)
 		return
 	}
 
@@ -148,8 +148,8 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		vd.SetAlert(err)
 	} else {
-		vd.Alert = &views.Alert {
-			Level: views.AlertLvlSuccess,
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlSuccess,
 			Message: "Gallery updated successfully!",
 		}
 	}
@@ -158,7 +158,7 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
-	
+
 	gallery, err := g.galleryByID(w, r)
 	if err != nil {
 		return
@@ -166,9 +166,9 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 
 	user := context.User(r.Context())
 	if gallery.UserID != user.ID {
-		http.Error(w, "You do not have permission to delete " +
-                              "this gallery.",
-                              http.StatusForbidden)
+		http.Error(w, "You do not have permission to delete "+
+			"this gallery.",
+			http.StatusForbidden)
 		return
 	}
 
@@ -197,7 +197,7 @@ func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
 	galleries, err := g.gs.ByUserID(user.ID)
 	if err != nil {
 		http.Error(w, "Something went wrong.",
-                              http.StatusInternalServerError)
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 	user := context.User(r.Context())
 	if gallery.UserID != user.ID {
 		http.Error(w, "Gallery not found.",
-                              http.StatusForbidden)
+			http.StatusForbidden)
 		return
 	}
 
@@ -252,7 +252,7 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	url, err := g.r.Get(EditGallery).
-                        URL("id", fmt.Sprintf("%v", gallery.ID))
+		URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
 		http.Redirect(w, r, "/galleries", http.StatusFound)
 		return
@@ -270,7 +270,7 @@ func (g *Galleries) ImageDelete(w http.ResponseWriter, r *http.Request) {
 
 	user := context.User(r.Context())
 	if gallery.UserID != user.ID {
-		http.Error(w, "You do not have permission to edit " +
+		http.Error(w, "You do not have permission to edit "+
 			"this gallery or image", http.StatusForbidden)
 		return
 	}
@@ -278,9 +278,9 @@ func (g *Galleries) ImageDelete(w http.ResponseWriter, r *http.Request) {
 	// Get the filname from the path
 	filename := mux.Vars(r)["filename"]
 	// Build the Image model
-	i := models.Image {
+	i := models.Image{
 		GalleryID: gallery.ID,
-		Filename: filename,
+		Filename:  filename,
 	}
 
 	// Try to delete the image
@@ -296,7 +296,7 @@ func (g *Galleries) ImageDelete(w http.ResponseWriter, r *http.Request) {
 
 	// If all goes well, redirect to the edit gallery page
 	url, err := g.r.Get(EditGallery).
-                        URL("id", fmt.Sprintf("%v", gallery.ID))
+		URL("id", fmt.Sprintf("%v", gallery.ID))
 	if err != nil {
 		http.Redirect(w, r, "/galleries", http.StatusFound)
 	}
@@ -318,11 +318,11 @@ func (g *Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models
 	if err != nil {
 		switch err {
 		case models.ErrNotFound:
-			http.Error(w, "Gallery not found", 
-                                      http.StatusNotFound)
+			http.Error(w, "Gallery not found",
+				http.StatusNotFound)
 		default:
-			http.Error(w, "Whoops! Something went wrong.", 
-                                      http.StatusInternalServerError)
+			http.Error(w, "Whoops! Something went wrong.",
+				http.StatusInternalServerError)
 		}
 
 		return nil, err
@@ -333,6 +333,3 @@ func (g *Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models
 
 	return gallery, nil
 }
-
-
-

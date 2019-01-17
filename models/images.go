@@ -13,15 +13,14 @@ import (
 // stored on disk.
 type Image struct {
 	GalleryID uint
-	Filename string
+	Filename  string
 }
 
 // Path is used to build the absolute path used to reference this image
 // via web request.
 func (i *Image) Path() string {
-	temp := url.URL {
+	temp := url.URL{
 		Path: "/" + i.RelativePath(),
-
 	}
 	return temp.String()
 }
@@ -33,9 +32,9 @@ func (i *Image) RelativePath() string {
 	galleryID := fmt.Sprintf("%v", i.GalleryID)
 
 	return filepath.ToSlash(filepath.Join("images",
-                                              "galleries",
-                                              galleryID,
-                                              i.Filename))
+		"galleries",
+		galleryID,
+		i.Filename))
 }
 
 type ImageService interface {
@@ -48,7 +47,7 @@ func NewImageService() ImageService {
 	return &imageService{}
 }
 
-type imageService struct {}
+type imageService struct{}
 
 func (is *imageService) Create(galleryID uint, r io.Reader, filename string) error {
 
@@ -61,7 +60,7 @@ func (is *imageService) Create(galleryID uint, r io.Reader, filename string) err
 	dst, err := os.Create(filepath.Join(path, filename))
 	if err != nil {
 		return err
-	}	
+	}
 	defer dst.Close()
 
 	// Copy uploaded file data to the destination file
@@ -88,9 +87,9 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 	// Setup the Image slice we are returning
 	ret := make([]Image, len(strings))
 	for i, imgStr := range strings {
-		ret[i] = Image {
+		ret[i] = Image{
 			GalleryID: galleryID,
-			Filename: filepath.Base(imgStr),
+			Filename:  filepath.Base(imgStr),
 		}
 	}
 
@@ -110,6 +109,5 @@ func (is *imageService) mkImagePath(galleryID uint) (string, error) {
 
 func (is *imageService) imagePath(galleryID uint) string {
 	return filepath.Join("images", "galleries",
-                             fmt.Sprintf("%v", galleryID))
+		fmt.Sprintf("%v", galleryID))
 }
-

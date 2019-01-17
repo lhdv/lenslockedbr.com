@@ -6,16 +6,16 @@ import (
 
 const (
 	ErrUserIDRequired modelError = "models: user ID is required"
-	ErrTitleRequired modelError = "models: title is required"
+	ErrTitleRequired  modelError = "models: title is required"
 )
 
 var _ GalleryDB = &galleryGorm{}
 
 type Gallery struct {
 	gorm.Model
-	
-	UserID uint `gorm:not_null;index`
-	Title string `gorm:not_null`
+
+	UserID uint    `gorm:not_null;index`
+	Title  string  `gorm:not_null`
 	Images []Image `gorm:"-"`
 }
 
@@ -24,7 +24,7 @@ func (g *Gallery) ImagesSplitN(n int) [][]Image {
 	// Create our 2D slice
 	ret := make([][]Image, n)
 
-	// Create the inner slices - we need N of them, and we 
+	// Create the inner slices - we need N of them, and we
 	// will start them with a size of 0.
 	for i := 0; i < n; i++ {
 		ret[i] = make([]Image, 0)
@@ -41,7 +41,7 @@ func (g *Gallery) ImagesSplitN(n int) [][]Image {
 }
 
 // GalleryDB is used to interact with the galleries database.
-// 
+//
 // For pretty much all single gallery queries:
 // If the gallery is found, we will return a nil error
 // If the gallery is not found, we will return ErrNotFound
@@ -66,9 +66,9 @@ type galleryService struct {
 }
 
 func NewGalleryService(db *gorm.DB) GalleryService {
-	return &galleryService {
-		GalleryDB: &galleryValidator {
-			GalleryDB: &galleryGorm {
+	return &galleryService{
+		GalleryDB: &galleryValidator{
+			GalleryDB: &galleryGorm{
 				db: db,
 			},
 		},
@@ -92,7 +92,7 @@ func (g *galleryGorm) Update(gallery *Gallery) error {
 }
 
 func (g *galleryGorm) Delete(id uint) error {
-	gallery := Gallery { Model: gorm.Model { ID: id } }
+	gallery := Gallery{Model: gorm.Model{ID: id}}
 
 	return g.db.Delete(&gallery).Error
 }
@@ -113,8 +113,8 @@ func (g *galleryGorm) ByUserID(userID uint) ([]Gallery, error) {
 	var galleries []Gallery
 
 	db := g.db.Where("user_id = ?", userID)
-	
-	if err := db.Find(&galleries).Error ; err != nil {
+
+	if err := db.Find(&galleries).Error; err != nil {
 		return nil, err
 	}
 
@@ -130,7 +130,7 @@ type galleryValidator struct {
 }
 
 func (gv *galleryValidator) userIDRequired(g *Gallery) error {
-	if g.UserID <= 0 {	
+	if g.UserID <= 0 {
 		return ErrUserIDRequired
 	}
 
@@ -140,7 +140,7 @@ func (gv *galleryValidator) userIDRequired(g *Gallery) error {
 func (gv *galleryValidator) titleRequired(g *Gallery) error {
 	if g.Title == "" {
 		return ErrTitleRequired
-	}	
+	}
 
 	return nil
 }
@@ -167,10 +167,10 @@ func (gv *galleryValidator) Create(gallery *Gallery) error {
 }
 
 func (gv *galleryValidator) Update(gallery *Gallery) error {
-	
+
 	err := runGalleryValFns(gallery,
-			gv.userIDRequired,
-			gv.titleRequired)
+		gv.userIDRequired,
+		gv.titleRequired)
 
 	if err != nil {
 		return err
@@ -185,7 +185,7 @@ func (gv *galleryValidator) Delete(id uint) error {
 	gallery.ID = id
 
 	err := runGalleryValFns(&gallery,
-			gv.nonZeroID)
+		gv.nonZeroID)
 	if err != nil {
 		return err
 	}

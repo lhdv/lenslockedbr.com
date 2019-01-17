@@ -13,19 +13,18 @@ type HMAC struct {
 	hmac hash.Hash
 }
 
-
 // NewHMAC creates and returns a new HMAC object
 func NewHMAC(key string) HMAC {
 	h := hmac.New(sha256.New, []byte(key))
 
-	return HMAC {
+	return HMAC{
 		hmac: h,
 	}
 }
 
 // Hash will hash the provided input string using HMAC with the secret
 // key provided when the HMAC object was created
-func (h HMAC)Hash(input string) string {
+func (h HMAC) Hash(input string) string {
 	h.hmac.Reset()
 	h.hmac.Write([]byte(input))
 	b := h.hmac.Sum(nil)

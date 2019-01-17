@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"strings"
 
-	"lenslockedbr.com/models"
 	"lenslockedbr.com/context"
+	"lenslockedbr.com/models"
 )
 
-type RequireUser struct { }
+type RequireUser struct{}
 
 func (mw *RequireUser) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, 
-                                     r *http.Request){
+	return http.HandlerFunc(func(w http.ResponseWriter,
+		r *http.Request) {
 
 		user := context.User(r.Context())
 		if user == nil {
@@ -37,11 +37,11 @@ type User struct {
 }
 
 func (mw *User) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func (w http.ResponseWriter, 
-                                      r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter,
+		r *http.Request) {
 		path := r.URL.Path
 		if strings.HasPrefix(path, "/assets/") ||
-                   strings.HasPrefix(path, "/images/") {
+			strings.HasPrefix(path, "/images/") {
 			next(w, r)
 			return
 		}

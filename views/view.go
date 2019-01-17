@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	LayoutDir string = "views/layouts/"
+	LayoutDir   string = "views/layouts/"
 	TemplateDir string = "views/"
 	TemplateExt string = ".gohtml"
 )
@@ -30,7 +30,7 @@ func NewView(layout string, notfound bool, files ...string) *View {
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, layoutFiles()...)
-	t, err := template.New("").Funcs(template.FuncMap {
+	t, err := template.New("").Funcs(template.FuncMap{
 		"csrfField": func() (template.HTML, error) {
 			return " ", errors.New("csrfField is not implemented")
 		},
@@ -42,15 +42,15 @@ func NewView(layout string, notfound bool, files ...string) *View {
 		panic(err)
 	}
 
-	return &View{ 
-		Template: t, 
-                Layout: layout,
+	return &View{
+		Template: t,
+		Layout:   layout,
 		NotFound: notfound,
 	}
 }
 
-func (v *View) Render(w http.ResponseWriter, r *http.Request, 
-                      data interface{}) {
+func (v *View) Render(w http.ResponseWriter, r *http.Request,
+	data interface{}) {
 	var buf bytes.Buffer
 	var vd Data
 
@@ -60,9 +60,9 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request,
 	case Data:
 		vd = d
 	default:
-		vd = Data {
+		vd = Data{
 			Yield: data,
-		}	
+		}
 	}
 
 	// Lookup the alert and assign it if one is persisted
@@ -74,7 +74,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request,
 	vd.User = context.User(r.Context())
 
 	csrfField := csrf.TemplateField(r)
-	tpl := v.Template.Funcs(template.FuncMap {
+	tpl := v.Template.Funcs(template.FuncMap{
 		"csrfField": func() template.HTML {
 			return csrfField
 		},
@@ -83,9 +83,9 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request,
 	err := tpl.ExecuteTemplate(&buf, v.Layout, vd)
 	if err != nil {
 		http.Error(w, "Something went wrong. If the problem "+
-                              "persists, please email " + 
-                              "support@lenslockedbr.com",
-                           http.StatusInternalServerError)
+			"persists, please email "+
+			"support@lenslockedbr.com",
+			http.StatusInternalServerError)
 		return
 	}
 
@@ -137,4 +137,3 @@ func addTemplateExt(files []string) {
 		files[i] = f + TemplateExt
 	}
 }
-

@@ -11,7 +11,7 @@ const (
 	userKey privateKey = "user"
 )
 
-func WithUser(ctx context.Context, user* models.User) context.Context {
+func WithUser(ctx context.Context, user *models.User) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 

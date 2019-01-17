@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"lenslockedbr.com/models"
 	_ "lenslockedbr.com/hash"
+	"lenslockedbr.com/models"
 	_ "lenslockedbr.com/rand"
 )
 
@@ -16,12 +16,11 @@ const (
 	dbname   = "lenslockedbr_dev"
 )
 
-
 func main() {
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s " +  
-                                "dbname=%s sslmode=disable",
-		                 host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s "+
+		"dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
 
 	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
@@ -36,10 +35,10 @@ func main() {
 
 	var user models.User
 
-	user = models.User{ Name: "Foobar", 
-			    Age: 10,
-                            Email: "foobar@example.com",
-			    Password: "321123",
+	user = models.User{Name: "Foobar",
+		Age:      10,
+		Email:    "foobar@example.com",
+		Password: "321123",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -61,10 +60,10 @@ func main() {
 
 	fmt.Printf("%+v\n", *user2)
 
-	user = models.User{ Name: "Test", 
-			Age: 15,
-			Email: "test@example.com",
-			Password: "abcdef",
+	user = models.User{Name: "Test",
+		Age:      15,
+		Email:    "test@example.com",
+		Password: "abcdef",
 	}
 	err = us.Create(&user)
 	if err != nil {
@@ -95,7 +94,7 @@ func main() {
 
 	fmt.Println("User updated:", byId)
 
-	agesInRange, err := us.InAgeRange(1,20)
+	agesInRange, err := us.InAgeRange(1, 20)
 	if err != nil {
 		panic(err)
 	}
@@ -112,16 +111,16 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("User find deleted by ID:", fetchById)
-/*
+	/*
 
-	// Generating random string
-	s, _ := rand.String(10)
-	fmt.Println(s, len(s))
-	s, _ = rand.RememberToken()
-	fmt.Println(s, len(s))
+		// Generating random string
+		s, _ := rand.String(10)
+		fmt.Println(s, len(s))
+		s, _ = rand.RememberToken()
+		fmt.Println(s, len(s))
 
-	// Hashing a string
-	hmac := hash.NewHMAC("my-secret-key")
-	fmt.Println(hmac.Hash("this is my string to hash"))
-*/	
+		// Hashing a string
+		hmac := hash.NewHMAC("my-secret-key")
+		fmt.Println(hmac.Hash("this is my string to hash"))
+	*/
 }

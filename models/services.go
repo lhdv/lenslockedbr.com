@@ -10,10 +10,10 @@ import (
 type ServicesConfig func(*Services) error
 
 type Services struct {
-	User UserService
+	User    UserService
 	Gallery GalleryService
-	Image ImageService
-	db *gorm.DB
+	Image   ImageService
+	db      *gorm.DB
 }
 
 func NewServices(cfgs ...ServicesConfig) (*Services, error) {
@@ -46,7 +46,7 @@ func (s *Services) AutoMigrate() error {
 // DestructiveReset drops all tables and rebuilds them
 func (s *Services) DestructiveReset() error {
 	err := s.db.DropTableIfExists(&User{}, &Gallery{}, &pwReset{}).
-                                     Error
+		Error
 	if err != nil {
 		return err
 	}
@@ -94,5 +94,3 @@ func WithImage() ServicesConfig {
 		return nil
 	}
 }
-
-

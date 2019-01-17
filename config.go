@@ -8,21 +8,21 @@ import (
 )
 
 type Config struct {
-	Port int `json:"port"`
-	Env string `json:"env"`
-	Pepper string `json:"pepper"`
+	Port    int    `json:"port"`
+	Env     string `json:"env"`
+	Pepper  string `json:"pepper"`
 	HMACKey string `json:"hmac_key"`
 
 	Database PostgresConfig `json:"database"`
-	Mailgun MailgunConfig `json:"mailgun"`
+	Mailgun  MailgunConfig  `json:"mailgun"`
 }
 
 func DefaultConfig() Config {
-	return Config {
-		Port: 3000,
-		Env: "dev",
-		Pepper: "foobar",
-		HMACKey: "secret-hmac-key", 
+	return Config{
+		Port:     3000,
+		Env:      "dev",
+		Pepper:   "foobar",
+		HMACKey:  "secret-hmac-key",
 		Database: DefaultPostgresConfig(),
 	}
 }
@@ -40,7 +40,7 @@ func LoadConfig(configReq bool) Config {
 		}
 
 		log.Println("Using the default config...")
-		return DefaultConfig()		
+		return DefaultConfig()
 	}
 
 	var c Config
@@ -57,20 +57,20 @@ func LoadConfig(configReq bool) Config {
 }
 
 type PostgresConfig struct {
-	Host string `json:"host"`
-	Port int `json:"port"`
-	User string `json:"user"`
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	User     string `json:"user"`
 	Password string `json:"password"`
-	Name string `json:"name"`
+	Name     string `json:"name"`
 }
 
 func DefaultPostgresConfig() PostgresConfig {
-	return PostgresConfig {
-		Host: "192.168.56.101",
-		Port: 5432,
-		User: "developer",
+	return PostgresConfig{
+		Host:     "192.168.56.101",
+		Port:     5432,
+		User:     "developer",
 		Password: "1234qwer",
-		Name: "lenslockedbr_dev",
+		Name:     "lenslockedbr_dev",
 	}
 }
 
@@ -80,19 +80,18 @@ func (c PostgresConfig) Dialect() string {
 
 func (c PostgresConfig) ConnectionInfo() string {
 	if c.Password == "" {
-		return fmt.Sprintf("host=%s port=%d user=%s dbname=%s " +
-                                   "sslmode=disable", c.Host, c.Port,
-                                   c.User, c.Name)
+		return fmt.Sprintf("host=%s port=%d user=%s dbname=%s "+
+			"sslmode=disable", c.Host, c.Port,
+			c.User, c.Name)
 	}
 
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s " + 
-                           "dbname=%s sslmode=disable", c.Host, c.Port,
-                           c.User, c.Password, c.Name)
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s "+
+		"dbname=%s sslmode=disable", c.Host, c.Port,
+		c.User, c.Password, c.Name)
 }
 
 type MailgunConfig struct {
-	APIKey string `json:"api_key"`
+	APIKey       string `json:"api_key"`
 	PublicAPIKey string `json:"public_api_key"`
-	Domain string `json:"domain"`
+	Domain       string `json:"domain"`
 }
-

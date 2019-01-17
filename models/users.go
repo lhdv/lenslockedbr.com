@@ -9,8 +9,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
 
-	"lenslockedbr.com/rand"
 	"lenslockedbr.com/hash"
+	"lenslockedbr.com/rand"
 )
 
 var (
@@ -24,8 +24,8 @@ var (
 
 	// ErrPasswordIncorrect is returned when an invalid password
 	// is used when attempting to authenticate a user.
-	ErrPasswordIncorrect modelError = "models: incorrect password " + 
-                                          "provided"
+	ErrPasswordIncorrect modelError = "models: incorrect password " +
+		"provided"
 
 	// ErrEmailRequired is returned when an email address is not
 	// provided when creating a user
@@ -37,13 +37,13 @@ var (
 
 	// ErrEmailTaken is returned when an update or create is attempted
 	// with an email address that is already in use.
-	ErrEmailTaken modelError = "models: email address is already " + 
-                                   "taken"
+	ErrEmailTaken modelError = "models: email address is already " +
+		"taken"
 
-	// ErrPasswordTooShort is returned when a user tries to set a 
+	// ErrPasswordTooShort is returned when a user tries to set a
 	// password that is less than 8 characters long.
 	ErrPasswordTooShort modelError = "models: password must be at" +
-                                         " least 8 characters long"
+		" least 8 characters long"
 
 	// ErrPasswordRequired is returned when a create is attempted
 	// without a user password provided.
@@ -52,16 +52,16 @@ var (
 	// ErrRememberRequired is returned when a create or update is
 	// attempted without a user remember token hash
 	ErrRememberRequired modelError = "models: remember token " +
-                                         " is required"
+		" is required"
 
 	// ErrRememberTooShort is returned when a remember token is not
 	// at least 32 bytes
 	ErrRememberTooShort modelError = "models: remember token must " +
-                            " be at least 32 bytes"
+		" be at least 32 bytes"
 
 	ErrTokenInvalid modelError = "models: token provided is not valid"
 
-	_ UserDB = &userGorm{}
+	_ UserDB      = &userGorm{}
 	_ UserService = &userService{}
 )
 
@@ -94,7 +94,7 @@ type UserDB interface {
 	ByID(id uint) (*User, error)
 	ByEmail(email string) (*User, error)
 	ByRemember(token string) (*User, error)
-	ByAge(age int) (*User, error) 
+	ByAge(age int) (*User, error)
 
 	// Methods for querying multiples users
 	InAgeRange(min, max int) ([]User, error)
@@ -114,14 +114,13 @@ type userGorm struct {
 
 // work with the user model
 type UserService interface {
-
 	UserDB
 
 	// Authenticate will verify the provided email address
 	// and password are correct. If they are correct, the
 	// user corresponding to that email will be returned.
 	// Otherwise you will receive either:
-	// ErrNotFound, ErrPasswordIncorrect, or another error 
+	// ErrNotFound, ErrPasswordIncorrect, or another error
 	// if something goes wrong.
 	Authenticate(email, password string) (*User, error)
 
@@ -141,7 +140,7 @@ type UserService interface {
 
 type userService struct {
 	UserDB
-	pepper string
+	pepper    string
 	pwResetDB pwResetDB
 }
 
@@ -149,8 +148,8 @@ type userService struct {
 // data before passing it on to the next UserDB in our interface chain.
 type userValidator struct {
 	UserDB
-	hmac hash.HMAC
-	pepper string
+	hmac       hash.HMAC
+	pepper     string
 	emailRegex *regexp.Regexp
 }
 
@@ -186,35 +185,35 @@ func (e modelError) Public() string {
 /////////////////////////////////////////////////////////////////////
 
 // THIS NO LONGER RETURNS A POINTER! Interfaces can be nil, so we don't
-// need to return a pointer here. Don't forget to update this first 
+// need to return a pointer here. Don't forget to update this first
 // line - we removed the * character at the end where we write
 // (UserService, error)
 func NewUserService(db *gorm.DB, pepper, hmacKey string) UserService {
 
 	u := &userGorm{db}
 	hmac := hash.NewHMAC(hmacKey)
-	uv := newUserValidator(u, hmac, pepper) 
+	uv := newUserValidator(u, hmac, pepper)
 
 	// We also need to update how we construct the user service.
-	// We no longer have a UserService type to construct, and 
+	// We no longer have a UserService type to construct, and
 	// instead need to use the userService type.
 	// This IS still a pointer, as our functions implementing the
 	// UserService are done with pointer receivers. eg:
 	//   func (us *userService) <- this uses a pointer
 	return &userService{
-		UserDB: uv,
-		pepper: pepper,
+		UserDB:    uv,
+		pepper:    pepper,
 		pwResetDB: newPwResetValidator(&pwResetGorm{db}, hmac),
 	}
 }
 
 func newUserValidator(udb UserDB, hmac hash.HMAC, pepper string) *userValidator {
-	return &userValidator {
+	return &userValidator{
 		UserDB: udb,
-		hmac: hmac,
+		hmac:   hmac,
 		pepper: pepper,
 		emailRegex: regexp.MustCompile(
-                           `^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
+			`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,16}$`),
 	}
 }
 
@@ -223,17 +222,17 @@ func newUserValidator(udb UserDB, hmac hash.HMAC, pepper string) *userValidator 
 func (u *userValidator) Create(user *User) error {
 
 	err := runUserValFns(user, u.passwordRequired,
-				   u.passwordMinLength,
-                                   u.bcryptPassword,
-				   u.passwordHashRequired,
-				   u.setRememberIfUnset,
-				   u.rememberMinBytes,
-                                   u.hmacRemember,
-				   u.rememberHashRequired,
-				   u.normalizeEmail,
-				   u.requireEmail,
-				   u.emailFormat,
-				   u.emailIsAvail)
+		u.passwordMinLength,
+		u.bcryptPassword,
+		u.passwordHashRequired,
+		u.setRememberIfUnset,
+		u.rememberMinBytes,
+		u.hmacRemember,
+		u.rememberHashRequired,
+		u.normalizeEmail,
+		u.requireEmail,
+		u.emailFormat,
+		u.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -251,15 +250,15 @@ func (u *userGorm) Create(user *User) error {
 func (u *userValidator) Update(user *User) error {
 
 	err := runUserValFns(user, u.passwordMinLength,
-                                   u.bcryptPassword,
-				   u.passwordHashRequired,
-				   u.rememberMinBytes,
-                                   u.hmacRemember,
-				   u.rememberHashRequired,
-				   u.normalizeEmail,
-				   u.requireEmail,
-				   u.emailFormat,
-				   u.emailIsAvail)
+		u.bcryptPassword,
+		u.passwordHashRequired,
+		u.rememberMinBytes,
+		u.hmacRemember,
+		u.rememberHashRequired,
+		u.normalizeEmail,
+		u.requireEmail,
+		u.emailFormat,
+		u.emailIsAvail)
 	if err != nil {
 		return err
 	}
@@ -297,7 +296,7 @@ func (u *userGorm) Delete(id uint) error {
 // email address and password.
 // If the email address provided is invalid, this will return
 // nil, ErroNotFound
-// If the password provided is invalid, this will return 
+// If the password provided is invalid, this will return
 // nil. ErrPasswordIncorrect
 // If the email and password are both valid, this will return
 // user, nil
@@ -309,8 +308,8 @@ func (u *userService) Authenticate(email, password string) (*User, error) {
 	}
 
 	err = bcrypt.CompareHashAndPassword(
-			[]byte(foundUser.PasswordHash),
-			[]byte(password+u.pepper))
+		[]byte(foundUser.PasswordHash),
+		[]byte(password+u.pepper))
 
 	switch err {
 	case nil:
@@ -329,7 +328,7 @@ func (u *userService) InitiateReset(email string) (string, error) {
 		return "", err
 	}
 
-	pwr := pwReset {
+	pwr := pwReset{
 		UserID: user.ID,
 	}
 	if err := u.pwResetDB.Create(&pwr); err != nil {
@@ -363,7 +362,7 @@ func (u *userService) CompleteReset(token, newPw string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-		
+
 	u.pwResetDB.Delete(pwr.ID)
 
 	return user, nil
@@ -378,10 +377,10 @@ func (u *userValidator) bcryptPassword(user *User) error {
 		// hasn't been changed.
 		return nil
 	}
-	
+
 	pwBytes := []byte(user.Password + u.pepper)
-	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, 
-						bcrypt.DefaultCost)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes,
+		bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
@@ -452,7 +451,7 @@ func (u *userValidator) emailFormat(user *User) error {
 	return nil
 }
 
-func (u *userValidator) emailIsAvail (user *User) error {
+func (u *userValidator) emailIsAvail(user *User) error {
 	existing, err := u.ByEmail(user.Email)
 	if err == ErrNotFound {
 		// Email address is available if we don't find
@@ -526,9 +525,10 @@ func (u *userValidator) rememberHashRequired(user *User) error {
 	if user.RememberHash == "" {
 		return ErrRememberRequired
 	}
-	
+
 	return nil
 }
+
 /////////////////////////////////////////////////////////////////////
 //
 // Query Methods
@@ -578,7 +578,7 @@ func (u *userGorm) ByEmail(email string) (*User, error) {
 // ByEmail will normalize an email address before passing it on to the
 // database layer to perform the query.
 func (u *userValidator) ByEmail(email string) (*User, error) {
-	user := User {
+	user := User{
 		Email: email,
 	}
 
@@ -629,8 +629,8 @@ func (u *userGorm) InAgeRange(min, max int) ([]User, error) {
 // that user. This method expects the remember token already hashed
 func (u *userGorm) ByRemember(rememberHashed string) (*User, error) {
 	var user User
-	err := first(u.db.Where("remember_hash = ?", rememberHashed), 
-                     &user)
+	err := first(u.db.Where("remember_hash = ?", rememberHashed),
+		&user)
 	if err != nil {
 		return nil, err
 	}
@@ -642,7 +642,7 @@ func (u *userGorm) ByRemember(rememberHashed string) (*User, error) {
 // the subsequent UserDB layer.
 func (u *userValidator) ByRemember(token string) (*User, error) {
 
-	user := User {
+	user := User{
 		Remember: token,
 	}
 

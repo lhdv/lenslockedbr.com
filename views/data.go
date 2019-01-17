@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	AlertLvlError = "danger"
+	AlertLvlError   = "danger"
 	AlertLvlWarning = "warning"
-	AlertLvlInfo = "info"
+	AlertLvlInfo    = "info"
 	AlertLvlSuccess = "success"
 
 	// AlertMsgGeneric is displayed when any random error is
 	// encountered by our backend.
 	AlertMsgGeneric = "Something went wrong. Please try again, " +
-                          "and contact us if the problem persists."
+		"and contact us if the problem persists."
 )
 
 type PublicError interface {
@@ -27,18 +27,18 @@ type PublicError interface {
 
 // Alert is used to render Bootstrap Alert messages in templates
 type Alert struct {
-	Level string
+	Level   string
 	Message string
 }
 
 // Data is the top level structure that views expect data to come in.
 type Data struct {
 	Alert *Alert
-	User *models.User
+	User  *models.User
 	Yield interface{}
 }
 
-func (d *Data) SetAlert(err error) { 
+func (d *Data) SetAlert(err error) {
 	var msg string
 
 	if pErr, ok := err.(PublicError); ok {
@@ -48,15 +48,15 @@ func (d *Data) SetAlert(err error) {
 		msg = AlertMsgGeneric
 	}
 
-	d.Alert = &Alert {
-		Level: AlertLvlError,
+	d.Alert = &Alert{
+		Level:   AlertLvlError,
 		Message: msg,
 	}
 }
 
 func (d *Data) AlertError(msg string) {
-	d.Alert = &Alert {
-		Level: AlertLvlError,
+	d.Alert = &Alert{
+		Level:   AlertLvlError,
 		Message: msg,
 	}
 }
@@ -66,7 +66,7 @@ func (d *Data) AlertError(msg string) {
 // alert in a cookie so that it can be displayed when the new page
 // is loaded
 func RedirectAlert(w http.ResponseWriter, r *http.Request, urlStr string,
-                   code int, alert Alert) {
+	code int, alert Alert) {
 	persistAlert(w, alert)
 	http.Redirect(w, r, urlStr, code)
 }
@@ -80,17 +80,17 @@ func RedirectAlert(w http.ResponseWriter, r *http.Request, urlStr string,
 func persistAlert(w http.ResponseWriter, alert Alert) {
 
 	expiresAt := time.Now().Add(5 * time.Minute)
-	lvl := http.Cookie {
-		Name: "alert_level",
-		Value: alert.Level,
-		Expires: expiresAt,
+	lvl := http.Cookie{
+		Name:     "alert_level",
+		Value:    alert.Level,
+		Expires:  expiresAt,
 		HttpOnly: true,
 	}
 
-	msg := http.Cookie {
-		Name: "alert_message",
-		Value: alert.Message,
-		Expires: expiresAt,
+	msg := http.Cookie{
+		Name:     "alert_message",
+		Value:    alert.Message,
+		Expires:  expiresAt,
 		HttpOnly: true,
 	}
 
@@ -100,17 +100,17 @@ func persistAlert(w http.ResponseWriter, alert Alert) {
 
 func clearAlert(w http.ResponseWriter) {
 
-	lvl := http.Cookie {
-		Name: "alert_level",
-		Value: "",
-		Expires: time.Now(),
+	lvl := http.Cookie{
+		Name:     "alert_level",
+		Value:    "",
+		Expires:  time.Now(),
 		HttpOnly: true,
 	}
 
-	msg := http.Cookie {
-		Name: "alert_message",
-		Value: "",
-		Expires: time.Now(),
+	msg := http.Cookie{
+		Name:     "alert_message",
+		Value:    "",
+		Expires:  time.Now(),
 		HttpOnly: true,
 	}
 
@@ -130,12 +130,10 @@ func getAlert(r *http.Request) *Alert {
 		return nil
 	}
 
-	alert := Alert {
-		Level: lvl.Value,
+	alert := Alert{
+		Level:   lvl.Value,
 		Message: msg.Value,
 	}
 
 	return &alert
 }
-
-
