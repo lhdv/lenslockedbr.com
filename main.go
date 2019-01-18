@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 
+	"golang.org/x/oauth2"
+
 	"lenslockedbr.com/controllers"
 	"lenslockedbr.com/email"
 	"lenslockedbr.com/middleware"
@@ -53,6 +55,32 @@ func main() {
 	usersC := controllers.NewUsers(services.User, emailer)
 	galleriesC := controllers.NewGalleries(services.Gallery,
 		services.Image, r)
+
+        dbxOAuth := &oauth2.Config{
+		ClientID: cfg.Dropbox.ID,
+		ClientSecret: cfg.Dropbox.Secret,
+		Endpoint: oauth2.Endpoint{
+			AuthURL: cfg.Dropbox.AuthURL,
+			TokenURL: cfg.Dropbox.TokenURL,
+		},
+		RedirectURL:"http://localhost:3001/oauth/dropbox/callback",
+	}
+
+	dbxRedirect := func(w http.ResponseWriter, r *http.Request) {
+		state := csrf.Token(r)
+		url := dbxOAuth.AuthCodeURL(state)
+		http.Redirect(w, r, url, http.StatusFound)
+	}
+
+	r.HandleFunc("/oauth/dropbox/connect", dbxRedirect)
+
+	dbxCallback := func(w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		fmt.Fprintln(w, "code: ", r.FormValue("code"),
+                                " state: ", r.FormValue("state"))
+	}
+
+	r.HandleFunc("/oauth/dropbox/callback", dbxCallback)
 
 	//
 	// Middleware setup
