@@ -1,3 +1,5 @@
 *.swp
 *.exe
+*.bkp
 images/**
+.config
