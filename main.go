@@ -36,13 +36,21 @@ func main() {
 		models.WithLogMode(!cfg.IsProd()),
 		models.WithUser(cfg.Pepper, cfg.HMACKey),
 		models.WithGallery(),
-		models.WithImage())
+		models.WithImage(),
+		models.WithOAuth())
 	if err != nil {
 		panic(err)
 	}
 
 	defer services.Close()
 	services.AutoMigrate()
+
+	_, err = services.OAuth.Find(1, "dropbox")
+	if err == nil {
+		panic("error expected")
+	} else {
+		log.Println("No OAuth tokens found!")
+	}
 
 	mgCfg := cfg.Mailgun
 	emailer := email.NewClient(email.WithMailgun(mgCfg.Domain,
