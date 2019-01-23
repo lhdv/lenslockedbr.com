@@ -7,6 +7,7 @@ import (
 
 const (
 	ErrServiceRequired modelError = "models: service is required"
+	OAuthDropbox = "dropbox"
 )
 
 type OAuth struct {

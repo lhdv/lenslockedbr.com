@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	llctx "lenslockedbr.com/context"
 	"lenslockedbr.com/controllers"
 	"lenslockedbr.com/email"
 	"lenslockedbr.com/middleware"
@@ -45,13 +46,6 @@ func main() {
 	defer services.Close()
 	services.AutoMigrate()
 
-	_, err = services.OAuth.Find(1, "dropbox")
-	if err == nil {
-		panic("error expected")
-	} else {
-		log.Println("No OAuth tokens found!")
-	}
-
 	mgCfg := cfg.Mailgun
 	emailer := email.NewClient(email.WithMailgun(mgCfg.Domain,
 		mgCfg.APIKey,
@@ -66,6 +60,23 @@ func main() {
 	galleriesC := controllers.NewGalleries(services.Gallery,
 		services.Image, r)
 
+	//
+	// Middleware setup
+	//
+	userMw := middleware.User{
+		UserService: services.User,
+	}
+	requireUserMw := middleware.RequireUser{}
+
+	b, err := rand.Bytes(32)
+	if err != nil {
+		panic(err)
+	}
+	csrfMw := csrf.Protect(b, csrf.Secure(cfg.IsProd()))
+
+	//
+	// Dropbox OAuth Code - BEGIN
+	//
         dbxOAuth := &oauth2.Config{
 		ClientID: cfg.Dropbox.ID,
 		ClientSecret: cfg.Dropbox.Secret,
@@ -89,7 +100,8 @@ func main() {
 		http.Redirect(w, r, url, http.StatusFound)
 	}
 
-	r.HandleFunc("/oauth/dropbox/connect", dbxRedirect)
+	r.HandleFunc("/oauth/dropbox/connect", 
+                     requireUserMw.ApplyFn(dbxRedirect))
 
 	dbxCallback := func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
@@ -101,7 +113,8 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		} else if cookie == nil || cookie.Value != state {
-			http.Error(w, "Invalid state provided", http.StatusBadRequest)
+			http.Error(w, "Invalid state provided", 
+                                   http.StatusBadRequest)
 			return
 		}
 		cookie.Value = ""
@@ -115,24 +128,39 @@ func main() {
 			return
 		}
 
+		user := llctx.User(r.Context())
+		existing, err := services.OAuth.Find(user.ID,
+                                                     models.OAuthDropbox)
+		if err == models.ErrNotFound {
+			// noop
+		} else if err != nil {
+			http.Error(w, err.Error(), 
+                                   http.StatusInternalServerError)
+			return
+		} else {
+			services.OAuth.Delete(existing.ID)
+		}
+
+		userOAuth := models.OAuth {
+			UserID: user.ID,
+			Token: *token,
+			Service: models.OAuthDropbox,
+		}	
+		err = services.OAuth.Create(&userOAuth)
+		if err != nil {
+			http.Error(w, err.Error(), 
+                                   http.StatusInternalServerError)
+			return
+		}
+
 		fmt.Fprintf(w, "%+v", token)
 	}
 
-	r.HandleFunc("/oauth/dropbox/callback", dbxCallback)
-
+	r.HandleFunc("/oauth/dropbox/callback", 
+                     requireUserMw.ApplyFn(dbxCallback))
 	//
-	// Middleware setup
+	// Dropbox OAuth Code - END
 	//
-	userMw := middleware.User{
-		UserService: services.User,
-	}
-	requireUserMw := middleware.RequireUser{}
-
-	b, err := rand.Bytes(32)
-	if err != nil {
-		panic(err)
-	}
-	csrfMw := csrf.Protect(b, csrf.Secure(cfg.IsProd()))
 
 	r.NotFoundHandler = http.HandlerFunc(staticC.PageNotFound.ServeHTTP)
 

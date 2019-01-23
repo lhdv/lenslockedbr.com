@@ -23,6 +23,7 @@
       <ul class="nav navbar-nav navbar-right">
 	{{ if .User }}
         <li><a href="#">{{ .User.Name }}({{ .User.Email }})</a></li>
+        <li><a href="/oauth/dropbox/connect">Connect to Dropbox</a></li>
         <li>{{ template "logoutForm" }}</li>
         {{ else }}
         <li><a href="/login">Log In</a></li>
