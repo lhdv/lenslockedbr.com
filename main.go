@@ -63,7 +63,8 @@ func main() {
 	//
 	// OAuth configuration
 	//
-        dbxOAuth := &oauth2.Config{
+	oauthCfgs := make(map[string]*oauth2.Config)
+        oauthCfgs[models.OAuthDropbox] = &oauth2.Config{
 		ClientID: cfg.Dropbox.ID,
 		ClientSecret: cfg.Dropbox.Secret,
 		Endpoint: oauth2.Endpoint{
@@ -79,7 +80,7 @@ func main() {
 	usersC := controllers.NewUsers(services.User, emailer)
 	galleriesC := controllers.NewGalleries(services.Gallery,
 		services.Image, r)
-	oauthsC := controllers.NewOAuths(services.OAuth, dbxOAuth)
+	oauthsC := controllers.NewOAuths(services.OAuth, oauthCfgs)
 
 	//
 	// Middleware setup
@@ -118,10 +119,10 @@ func main() {
 	r.HandleFunc("/reset", usersC.CompleteReset).Methods("POST")
 
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
+
 	//
 	// Gallery routes
 	//
-
 	r.Handle("/galleries",
 		requireUserMw.ApplyFn(galleriesC.Index)).Methods("GET").
 		Name(controllers.IndexGallery)
@@ -164,11 +165,11 @@ func main() {
 	//
 	// DropboxAPI routes
 	//
-	r.HandleFunc("/oauth/dropbox/connect", 
-                     requireUserMw.ApplyFn(oauthsC.DropboxConnect))
-	r.HandleFunc("/oauth/dropbox/callback", 
-                     requireUserMw.ApplyFn(oauthsC.DropboxCallback))
-	r.HandleFunc("/oauth/dropbox/test", 
+	r.HandleFunc("/oauth/{service:[a-z]+}/connect", 
+                     requireUserMw.ApplyFn(oauthsC.Connect))
+	r.HandleFunc("/oauth/{service:[a-z]+}/callback", 
+                     requireUserMw.ApplyFn(oauthsC.Callback))
+	r.HandleFunc("/oauth/{service:[a-z]+}/test", 
                      requireUserMw.ApplyFn(oauthsC.DropboxTest))
 
 	//

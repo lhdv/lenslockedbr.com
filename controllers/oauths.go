@@ -13,24 +13,34 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/mux"
 
 	llctx "lenslockedbr.com/context"
 	"lenslockedbr.com/models"
 )
 
 type OAuths struct {
-	service models.OAuthService
-	oauthCfg *oauth2.Config
+	os models.OAuthService
+	configs map[string]*oauth2.Config
 }
 
-func NewOAuths(os models.OAuthService, dbxOAuth *oauth2.Config) *OAuths {
+func NewOAuths(os models.OAuthService, configs map[string]*oauth2.Config) *OAuths {
 	return &OAuths {
-		service: os,
-		oauthCfg: dbxOAuth,
+		os: os,
+		configs: configs, 
 	}
 }
 
-func(o *OAuths) DropboxConnect(w http.ResponseWriter, r *http.Request) {
+func(o *OAuths) Connect(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	service := vars["service"]
+	oauthCfg, ok := o.configs[service]
+	if !ok {
+		http.Error(w, "Invalid OAuth2 Service", 
+                           http.StatusBadRequest)
+		return
+	}
 
 	state := csrf.Token(r)
 	cookie := http.Cookie {
@@ -40,12 +50,21 @@ func(o *OAuths) DropboxConnect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &cookie)
-	url := o.oauthCfg.AuthCodeURL(state)
+	url := oauthCfg.AuthCodeURL(state)
 	log.Println(state)
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (o *OAuths) DropboxCallback(w http.ResponseWriter, r *http.Request) {
+func (o *OAuths) Callback(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	service := vars["service"]
+	oauthCfg, ok := o.configs[service]
+	if !ok {
+		http.Error(w, "Invalid OAuth2 Service", 
+                           http.StatusBadRequest)
+		return
+	}
 
 	r.ParseForm()
 
@@ -68,15 +87,14 @@ func (o *OAuths) DropboxCallback(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	code := r.FormValue("code")
-	token, err := o.oauthCfg.Exchange(context.TODO(), code)
+	token, err := oauthCfg.Exchange(context.TODO(), code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	user := llctx.User(r.Context())
-	existing, err := o.service.Find(user.ID,
-                                         models.OAuthDropbox)
+	existing, err := o.os.Find(user.ID, service)
 	if err == models.ErrNotFound {
 		// noop
 	} else if err != nil {
@@ -84,15 +102,15 @@ func (o *OAuths) DropboxCallback(w http.ResponseWriter, r *http.Request) {
                            http.StatusInternalServerError)
 		return
 	} else {
-		o.service.Delete(existing.ID)
+		o.os.Delete(existing.ID)
 	}
 
 	userOAuth := models.OAuth {
 		UserID: user.ID,
 		Token: *token,
-		Service: models.OAuthDropbox,
+		Service: service,
 	}	
-	err = o.service.Create(&userOAuth)
+	err = o.os.Create(&userOAuth)
 	if err != nil {
 		http.Error(w, err.Error(), 
                            http.StatusInternalServerError)
@@ -105,18 +123,26 @@ func (o *OAuths) DropboxCallback(w http.ResponseWriter, r *http.Request) {
 
 func (o *OAuths) DropboxTest(w http.ResponseWriter, r *http.Request) {
 
+	vars := mux.Vars(r)
+	service := vars["service"]
+	oauthCfg, ok := o.configs[service]
+	if !ok {
+		http.Error(w, "Invalid OAuth2 Service", 
+                           http.StatusBadRequest)
+		return
+	}
+
 	r.ParseForm()
 	path := r.FormValue("path")
 
 	user := llctx.User(r.Context())
-	userOAuth, err := o.service.Find(user.ID,
-                                          models.OAuthDropbox)
+	userOAuth, err := o.os.Find(user.ID, service)
 	if err != nil {
 		panic(err)
 	} 
 
 	token := userOAuth.Token
-	client := o.oauthCfg.Client(context.TODO(), &token)
+	client := oauthCfg.Client(context.TODO(), &token)
 
 	url := "https://api.dropboxapi.com/2/files/list_folder"
 
