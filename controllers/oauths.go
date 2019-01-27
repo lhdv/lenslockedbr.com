@@ -9,12 +9,10 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
-
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 
+	"lenslockedbr.com/dbx"
 	llctx "lenslockedbr.com/context"
 	"lenslockedbr.com/models"
 )
@@ -137,29 +135,16 @@ func (o *OAuths) DropboxTest(w http.ResponseWriter, r *http.Request) {
 
 	token := userOAuth.Token
 
-	config := dropbox.Config {
-		Token: token.AccessToken,
-	}
-	
-	dbx := files.New(config)
-	args := &files.ListFolderArg {
-		Path: path,
-	}
-
-	res, err := dbx.ListFolder(args)
+	folders, files, err := dbx.List(token.AccessToken, path)
 	if err != nil {
 		panic(err)
 	} 
 
-	for _, entry := range res.Entries {
-		switch meta := entry.(type) {
-		case *files.FolderMetadata:
-			fmt.Fprintln(w, "FolderMetadata=", meta)
-		case *files.FileMetadata:
-			fmt.Fprintln(w, "FileMetadata=", meta)
-		}
-	} 
+	log.Println(folders)
+	log.Println(files)
 
+	fmt.Fprintln(w, "Folders: ", folders)
+	fmt.Fprintln(w, "Files: ", files)
 }
 
 
