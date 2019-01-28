@@ -46,6 +46,12 @@ ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get g
 
 ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get gopkg.in/mailgun/mailgun-go.v1"
 
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
+
+ssh root@leandr0.net -p 2233 "export GOPATH=/root/go; /usr/local/go/bin/go get golang.org/x/oauth2"
+
 sleep 2
 
 echo "  Building the code on remote server..."
