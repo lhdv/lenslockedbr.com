@@ -151,6 +151,14 @@ func main() {
 		requireUserMw.ApplyFn(galleriesC.ImageUpload)).
 		Methods("POST")
 
+	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete",
+		requireUserMw.ApplyFn(galleriesC.ImageDelete)).
+		Methods("POST")
+
+	r.HandleFunc("/galleries/{id:[0-9]+}/images/link",
+		requireUserMw.ApplyFn(galleriesC.ImageViaLink)).
+		Methods("POST")
+
 	//
 	// Image routes
 	//
