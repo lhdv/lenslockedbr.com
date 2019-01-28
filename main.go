@@ -71,7 +71,7 @@ func main() {
 			AuthURL: cfg.Dropbox.AuthURL,
 			TokenURL: cfg.Dropbox.TokenURL,
 		},
-		RedirectURL:"http://localhost:3001/oauth/dropbox/callback",
+		RedirectURL: cfg.Dropbox.RedirectURL,
 	}
 
 	r := mux.NewRouter()
