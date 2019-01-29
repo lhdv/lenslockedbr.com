@@ -17,7 +17,7 @@ func NewStatic() *Static {
 			"static/home"),
 		Contact: views.NewView("bootstrap", false,
 			"static/contact"),
-		Faq: views.NewView("bootstrap_bggray", false,
+		Faq: views.NewView("bootstrap", false,
 			"static/faq"),
 		PageNotFound: views.NewView("bootstrap", true,
 			"static/page_not_found"),

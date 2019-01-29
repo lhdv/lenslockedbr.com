@@ -100,7 +100,6 @@ func main() {
 
 	r.Handle("/", staticC.Home).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
-	r.Handle("/faq", staticC.Faq).Methods("GET")
 
 	//
 	// User routes
