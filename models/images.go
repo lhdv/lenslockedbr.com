@@ -95,8 +95,8 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 		ret[i] = Image{
 			GalleryID: galleryID,
 			Filename:  filepath.Base(imgStr),
+			Hash: is.hashFile(imgStr),
 		}
-		log.Println(imgStr, is.hashFile(imgStr))
 	}
 
 	return ret, nil
