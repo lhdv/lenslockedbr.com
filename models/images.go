@@ -6,6 +6,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"lenslockedbr.com/hash"
+
+	"log"
 )
 
 // Image is used to represent images stored in a Gallery.
@@ -14,6 +18,7 @@ import (
 type Image struct {
 	GalleryID uint
 	Filename  string
+	Hash string
 }
 
 // Path is used to build the absolute path used to reference this image
@@ -90,11 +95,18 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 		ret[i] = Image{
 			GalleryID: galleryID,
 			Filename:  filepath.Base(imgStr),
+			Hash: is.hashFile(imgStr),
 		}
 	}
 
 	return ret, nil
 }
+
+/////////////////////////////////////////////////////////////////////
+//
+// Helper Methods
+//
+/////////////////////////////////////////////////////////////////////
 
 func (is *imageService) mkImagePath(galleryID uint) (string, error) {
 
@@ -110,4 +122,16 @@ func (is *imageService) mkImagePath(galleryID uint) (string, error) {
 func (is *imageService) imagePath(galleryID uint) string {
 	return filepath.Join("images", "galleries",
 		fmt.Sprintf("%v", galleryID))
+}
+
+func (is *imageService) hashFile(path string) string {
+
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	return hash.ReaderSHA256(file)
 }
